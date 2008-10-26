@@ -77,60 +77,12 @@ describe Cache::Lock do
   end
   
   describe '#release_lock' do
+    specify "deletes the lock for a given cache key" do
+      @memcache.get("lock:lock_key").should == nil
+      @lock.acquire_lock("lock_key")
+      @memcache.get("lock:lock_key").should_not == nil
+      @lock.release_lock("lock_key")
+      @memcache.get("lock:lock_key").should == nil
+    end
   end
 end
-
-
-# context "@lock::acquire_lock" do
-#   include LockCacheSpecSetup
-#   
-#   specify "creates a lock at a given cache key" do
-#     CACHE.get("lock:lock_key").should == nil
-#     @lock::acquire_lock("lock_key")
-#     CACHE.get("lock:lock_key").should_not == nil
-#   end
-#   
-#   specify "does not block on recursive lock acquisition" do
-#     @lock::acquire_lock('lock_key')
-#     lambda { @lock::acquire_lock('lock_key') }.should_not.raise
-#   end
-#   
-#   specify "retries specified number of times" do
-#     @lock::acquire_lock('lock_key')
-#     as_another_process do
-#       CACHE.memcache.expects(:add).returns("NOT_STORED\r\n").times(3)
-#       @lock.stubs(:exponential_sleep)
-#       lambda { @lock::acquire_lock('lock_key', 1, 3) }.should.raise(@lock::MemCacheLockError)
-#     end
-#   end
-#   
-#   specify "correctly sets timeout on memcache entries" do
-#     CACHE.memcache.expects(:add).with('lock:lock_key', Process.pid, timeout = 10).returns("STORED\r\n")
-#     @lock::acquire_lock('lock_key', timeout)
-#   end
-#   
-#   specify "prevents two processes from acquiring the same lock at the same time" do
-#     @lock::acquire_lock('lock_key')
-#     as_another_process do
-#       lambda { @lock::acquire_lock('lock_key') }.should.raise(@lock::MemCacheLockError)
-#     end
-#   end
-#   
-#   def as_another_process
-#     current_pid = Process.pid
-#     Process.stubs(:pid).returns(current_pid + 1)
-#     yield
-#   end
-# end
-# 
-# context "@lock::release_lock" do
-#   include LockCacheSpecSetup
-#   
-#   specify "deletes the lock for a given cache key" do
-#     CACHE.get("lock:lock_key").should == nil
-#     @lock::acquire_lock("lock_key")
-#     CACHE.get("lock:lock_key").should_not == nil
-#     @lock::release_lock("lock_key")
-#     CACHE.get("lock:lock_key").should == nil
-#   end
-# end

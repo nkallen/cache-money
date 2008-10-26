@@ -5,3 +5,5 @@ require 'activesupport'
 require 'activerecord'
 
 require 'cache/lock'
+require 'cache/transactional'
+require 'cache/buffered'
