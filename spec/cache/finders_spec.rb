@@ -7,63 +7,112 @@ module Cache
       Story.index :on => [:id, :title, [:id, :title]], :repository => Transactional.new($memcache, $lock)
     end
     
-    describe "Calls to finders on primary key" do  
-      it "should handle finds with a single id correctly when cache is already populated" do
-        story = Story.create!(:title => 'a story')
-        Story.find(story.id).should == story
-      end
+    describe "#find" do
+      describe 'when given ids' do
+        describe 'when the cache is already populated' do
+          it "should handle finds with a single id correctly" do
+            story = Story.create!(:title => 'a story')
+            Story.find(story.id).should == story
+          end
+        end
+      
+        describe 'when the cache is not populated' do
+          it "handles finds with a single id correctly when cache is not already populated" do
+            story = Story.create!(:title => 'a story')
+            Story.cache_repository.flush_all
+            Story.find(story.id).should == story
+          end
+        end
+      
+        describe 'when given multiple ids' do
+          describe 'when the cache is already populted' do
+            it "handles finds with multiple ids correctly" do
+              story1 = Story.create!
+              story2 = Story.create!
+              Story.find(story1.id, story2.id).should == [story1, story2]
+            end
+          end
+        
+          describe 'when the cache is partially populated' do
+            it "handles finds with multiple ids correctly" do
+              story1 = Story.create!(:title => 'story 1')
+              Story.cache_repository.flush_all
+              story2 = Story.create!(:title => 'story 2')
+              Story.find(story1.id, story2.id).should == [story1, story2]
+            end
+          end
+        
+          describe 'when the cache is not populated' do
+            it "should handle finds with multiple ids correctly" do
+              story1 = Story.create!
+              story2 = Story.create!
+              Story.cache_repository.flush_all
+              Story.find(story1.id, story2.id).should == [story1, story2]
+            end
+          end
+          
+          describe "when given some nil arguments" do
+            it "ignores the nils" do
+              story = Story.create!
+              Story.find(story.id, nil).should == story
+            end
+          end
+        end
 
-      it "handles finds with a single id correctly when cache is not already populated" do
-        story = Story.create!(:title => 'a story')
-        Story.cache_repository.flush_all
-        Story.find(story.id).should == story
+        describe 'when given nonexistend ids' do
+          describe 'when given one nonexistent id' do
+            it 'raises an error' do
+              lambda { Story.find(1) }.should raise_error(ActiveRecord::RecordNotFound)
+            end
+          end
+          
+          describe 'when given multiple nonexistent ids' do
+             it "raises an exception" do
+              lambda { Story.find(1, 2, 3) }.should raise_error(ActiveRecord::RecordNotFound)
+            end            
+          end
+        end
+      end
+      
+      describe 'when given arrays' do
+        describe 'when given an array with valid ids' do
+          it "finds the object with that id" do
+            story = Story.create!
+            Story.find([story.id]).should == [story]
+          end
+        end
+
+        describe 'when given the empty array' do
+          it 'returns the empty array' do
+            Story.find([]).should == []
+          end
+        end
+        
+        describe 'when given nonexistent ids' do
+          it 'raises an exception' do
+            lambda { Story.find([1, 2, 3]) }.should raise_error(ActiveRecord::RecordNotFound)
+          end
+        end
+        
       end
     end
-  
-  # 
-  #   specify "should handle finds with multiple ids correctly when cache is already populated" do
-  #     story1 = Story.create!
-  #     story2 = Story.create!
-  #     Story.find(story1.id, story2.id).should == [story1, story2]
-  #   end
-  # 
-  #   specify "should handle finds with multiple ids correctly when cache is partially populated" do
-  #     story1 = Story.create!(:title => 'story 1')
-  #     CACHE.clear
-  #     story2 = Story.create!(:title => 'story 2')
-  #     Story.find(story1.id, story2.id).should == [story1, story2]
-  #   end
-  # 
-  #   specify "should handle finds with multiple ids correctly when cache is not populated" do
-  #     story1 = Story.create!
-  #     story2 = Story.create!
-  #     CACHE.clear
-  #     Story.find(story1.id, story2.id).should == [story1, story2]
-  #   end
-  # 
-  #   specify "should handle nil values correctly" do
-  #     Story.find_by_id(-1).should == nil
-  #   end
-  # 
-  #   specify "should handle empty arrays correctly" do
-  #     Story.find([]).should == []
-  #   end
-  # 
-  #   specify "should raise exception for find() a single id" do
-  #     Story.destroy_all
-  #     lambda {Story.find(1)}.should.raise(ActiveRecord::RecordNotFound)
-  #   end
-  # 
-  #   specify "should raise exception for find() with multiple ids" do
-  #     Story.destroy_all
-  #     lambda {Story.find(1, 2, 3)}.should.raise(ActiveRecord::RecordNotFound)
-  #   end
-  # 
-  #   specify "should raise exception for find() with multiple ids given as an array" do
-  #     Story.destroy_all
-  #     lambda {Story.find([1, 2, 3])}.should.raise(ActiveRecord::RecordNotFound)
-  #   end
-  # 
+    
+    describe '#find_by_attr' do  
+      it 'handles nils' do
+        Story.find_by_id(nil).should == nil
+      end
+        
+      it 'handles non-existent ids' do
+        Story.find_by_id(-1).should == nil
+      end
+    end
+
+    describe '#find_all_by_attr' do
+      it "does not blow up when called with bad ids" do
+        lambda { Story.find_all_by_id([-1, -2, -3]) }.should_not raise_error
+      end
+    end
+    
   #   specify "should raise exception for find() after destroyed" do
   #     story = Story.create!(:title => "I am delicious")
   #     story_id = story.id
@@ -79,15 +128,6 @@ module Cache
   #     Story.find(story.id).should == story
   #   end
   # 
-  #   specify "should ignore nil arguments" do
-  #     story = Story.create!
-  #     Story.find(story.id, nil).should == story
-  #   end
-  # 
-  #   specify "should handle ids in arrays" do
-  #     story = Story.create!
-  #     Story.find([story.id]).should == [story]
-  #   end
   # 
   #   specify "should coerce arguments to integers" do
   #     story = Story.create!
@@ -100,9 +140,6 @@ module Cache
   #     Story.find_by_id(story.id).should == story
   #   end
   # 
-  #   specify "should not blow up when find_all_by_id is called with bad ids" do
-  #     lambda { Story.find_all_by_id([-1, -2, -3]) }.should.not.raise
-  #   end
   # 
   #   specify "should use the cache with find(:first, :conditions => {:id => ?})" do
   #     story = Story.create!
@@ -198,7 +235,7 @@ module Cache
   #   specify "should not pollute the cache when a find(:first) is followed by a find(:all)" do
   #     story1 = Story.create!(:title => 'title1')
   #     story2 = Story.create!(:title => story1.title)
-  #     CACHE.clear
+  #     Story.cache_repository.flush_all
   #     Story.find(:first, :conditions => {:title => story1.title}).should == story1
   #     Story.find(:all, :conditions => {:title => story1.title}).should == [story1, story2]
   #   end
@@ -249,7 +286,7 @@ module Cache
   # 
   #   specify "should handle finds with multiple ids correctly when cache is partially populated" do
   #     story1 = Story.create!(:title => title = 'once upon a time...')
-  #     CACHE.clear
+  #     Story.cache_repository.flush_all
   #     story2 = Story.create!(:title => title)
   #     Story.find_all_by_title(story1.title).should == [story1, story2]
   #   end
@@ -378,7 +415,7 @@ module Cache
   #   specify "on write through should not pollute the base-class cache" do
   #     story = Story.create!(:title => title = 'foo')
   #     feature = Feature.create!(:title => title)
-  #     CACHE.clear
+  #     Story.cache_repository.flush_all
   #     detail = Detail.create!(:title => title)
   #     Story.find(:all, :conditions => {:title => title}).should == [story, feature, detail]
   #   end

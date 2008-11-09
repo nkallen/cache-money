@@ -1,0 +1,13 @@
+* Use libmemcached rather than memcached-client
+* Reorganize transactional spec
+* Incorporate local_cache
+* Incorporate cache_mock
+* Release new railsprof plugin
+* Release test helper
+* Deal with TTL issues
+* Implement read-through strategy using add
+* Handle append strategy using add rather than set to avoid race condition
+* Uncovered update case
+* Deal with namespace pollution
+* Clarify terminology around cache/key/index, etc.
+* 
