@@ -2,20 +2,11 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
 describe Cache::Transactional do
   before do
-    @lock = Cache::Lock.new(@memcache)
     @cache = Cache::Transactional.new(@memcache, @lock)
     @value = "stuff to be cached"
     @key   = "key"
   end
-  
-  it "commits to the real cache" do
-    @memcache.get(@key).should == nil
-    @cache.transaction do
-      @cache.set(@key, @value)
-    end
-    @memcache.get(@key).should == @value
-  end
-  
+    
   describe 'Basic Operations' do
     it "gets through the real cache" do
       @memcache.set(@key, @value)
@@ -44,29 +35,22 @@ describe Cache::Transactional do
       @memcache.get(@key, true).to_i.should == 1
     end  
     
-    describe '#add' do
-      it "writes through the real cache" do
-        @cache.add(@key, @value)
-        @memcache.get(@key).should == @value
-        @cache.get(@key).should == @value
+    it "adds through the real cache" do
+      @cache.add(@key, @value)
+      @memcache.get(@key).should == @value
+      @cache.get(@key).should == @value
 
-        @cache.add(@key, "another value")
-        @memcache.get(@key).should == @value
-        @cache.get(@key).should == @value
-      end
-      
-      it "accepts options" do
-        mock(@memcache).add(@key, @value, options = :some_junk)
-        @cache.add(@key, @value, options)
-      end
-      
+      @cache.add(@key, "another value")
+      @memcache.get(@key).should == @value
+      @cache.get(@key).should == @value
     end
     
-    describe '#delete' do
-      it "accepts options" do
-        mock(@memcache).delete(@key, options = :some_junk)
-        @cache.delete(@key, options)
-      end
+    it "deletes through the real cache" do
+      @memcache.add(@key, @value)
+      @memcache.get(@key).should == @value
+
+      @cache.delete(@key, options)
+      @memcache.get(@key).should be_nil
     end
     
     it "returns true for respond_to? with what it responds to" do
@@ -86,7 +70,15 @@ describe Cache::Transactional do
   end
 
   describe 'In a Transaction' do
-    it "reads through the real cache if key has not been written to in a transaction" do
+    it "commits to the real cache" do
+      @memcache.get(@key).should == nil
+      @cache.transaction do
+        @cache.set(@key, @value)
+      end
+      @memcache.get(@key).should == @value
+    end
+    
+    it "reads through the real cache if key has not been written to" do
       @memcache.set(@key, @value)
       @cache.transaction do
         @cache.get(@key).should == @value
@@ -94,7 +86,7 @@ describe Cache::Transactional do
       @cache.get(@key).should == @value
     end
 
-    it "delegates unsupported messages back to the real cache, even in a transaction" do
+    it "delegates unsupported messages back to the real cache" do
       @cache.transaction do
         mock(@memcache).foo(:bar)
         @cache.foo(:bar)
@@ -212,7 +204,7 @@ describe Cache::Transactional do
         end
       end
 
-      it "release locks even if memcache blows up" do
+      it "releases locks even if memcache blows up" do
         mock(@lock).acquire_lock.with(@key)
         mock(@lock).release_lock.with(@key)
         stub(@memcache).set(anything, anything) { raise }
@@ -223,65 +215,66 @@ describe Cache::Transactional do
       
     end
     
-    it "reading from the proxy cache show uncommitted writes" do
-      @cache.get(@key).should == nil
-      @cache.transaction do
+    describe 'Buffering' do
+      it "reading from the cache show uncommitted writes" do
+        @cache.get(@key).should == nil
+        @cache.transaction do
+          @cache.set(@key, @value)
+          @cache.get(@key).should == @value
+        end
+      end
+
+      it "get_multi is buffered" do
+        @cache.transaction do
+          @cache.set('key1', @value)
+          @cache.set('key2', @value)
+          @cache.get_multi('key1', 'key2').should == { 'key1' => @value, 'key2' => @value }
+          @memcache.get_multi('key1', 'key2').should == {}
+        end
+      end
+
+      it "get is memoized" do
         @cache.set(@key, @value)
-        @cache.get(@key).should == @value
+        @cache.transaction do
+          @cache.get(@key).should == @value
+          @memcache.set(@key, "new value")
+          @cache.get(@key).should == @value
+        end
       end
-    end
-
-    it "get_multi is buffered" do
-      @cache.transaction do
-        @cache.set('key1', @value)
-        @cache.set('key2', @value)
-        @cache.get_multi('key1', 'key2').should == { 'key1' => @value, 'key2' => @value }
-        @memcache.get_multi('key1', 'key2').should == {}
-      end
-    end
-
-    it "get is memoized" do
-      @cache.set(@key, @value)
-      @cache.transaction do
-        @cache.get(@key).should == @value
-        @memcache.set(@key, "new value")
-        @cache.get(@key).should == @value
-      end
-    end
         
-    it "add is buffered" do
-      @cache.transaction do
-        @cache.add(@key, @value)
-        @memcache.get(@key).should == nil
+      it "add is buffered" do
+        @cache.transaction do
+          @cache.add(@key, @value)
+          @memcache.get(@key).should == nil
+          @cache.get(@key).should == @value
+        end
         @cache.get(@key).should == @value
-      end
-      @cache.get(@key).should == @value
-      @memcache.get(@key).should == @value
-    end
-
-    describe '#delete' do
-      it "within a transaction, delete is isolated" do
-        @cache.add(@key, @value)
-        @cache.transaction do
-          @cache.delete(@key)
-          @memcache.add(@key, "another value")
-        end
-        @cache.get(@key).should == nil
-        @memcache.get(@key).should == nil
+        @memcache.get(@key).should == @value
       end
 
-      it "within a transaction, delete be buffered" do
-        @cache.set(@key, @value)
-        @cache.transaction do
-          @cache.delete(@key)
-          @memcache.get(@key).should == @value
+      describe '#delete' do
+        it "within a transaction, delete is isolated" do
+          @cache.add(@key, @value)
+          @cache.transaction do
+            @cache.delete(@key)
+            @memcache.add(@key, "another value")
+          end
           @cache.get(@key).should == nil
+          @memcache.get(@key).should == nil
         end
-        @cache.get(@key).should == nil
-        @memcache.get(@key).should == nil
+
+        it "within a transaction, delete is buffered" do
+          @cache.set(@key, @value)
+          @cache.transaction do
+            @cache.delete(@key)
+            @memcache.get(@key).should == @value
+            @cache.get(@key).should == nil
+          end
+          @cache.get(@key).should == nil
+          @memcache.get(@key).should == nil
+        end
       end
     end
-    
     
     describe '#incr' do
       it "increment be atomic" do

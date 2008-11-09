@@ -1,10 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
 describe Cache::Lock do
-  before do
-    @lock = Cache::Lock.new(@memcache)
-  end
-  
   describe '#synchronize' do
     it "yields the block" do
       block_was_called = false
