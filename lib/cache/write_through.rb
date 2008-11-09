@@ -59,10 +59,6 @@ module Cache
       [old_attribute_value_pairs, new_attribute_value_pairs]
     end
 
-    def original_id
-      id
-    end
-
     def add_to_index_with_minimal_network_operations(attribute_value_pairs, object)
       if primary_key?(attribute_value_pairs)
         add_object_to_primary_key_cache(attribute_value_pairs, object)

@@ -25,7 +25,7 @@ module Cache
     def acquire_lock(key, lock_expiry = DEFAULT_EXPIRY, retries = DEFAULT_RETRY)
       retries.times do |count|
         begin
-          response = @cache.add("lock:#{key}", Process.pid, lock_expiry)
+          response = @cache.add("lock/#{key}", Process.pid, lock_expiry)
           return if response == "STORED\r\n"
         rescue MemCache::MemCacheError
           raise LockError if count == retries - 1
@@ -36,7 +36,7 @@ module Cache
     end
 
     def release_lock(key)
-      @cache.delete("lock:#{key}")
+      @cache.delete("lock/#{key}")
     end
 
     def exponential_sleep(count)
@@ -46,7 +46,7 @@ module Cache
     private
 
     def recursive_lock?(key)
-      @cache.get("lock:#{key}") == Process.pid
+      @cache.get("lock/#{key}") == Process.pid
     end
 
   end

@@ -3,11 +3,7 @@ module Cache
     def self.included(active_record_class)
       active_record_class.class_eval do
         extend ClassMethods
-        include InstanceMethods
       end
-    end
-
-    module InstanceMethods
     end
 
     module ClassMethods
@@ -132,7 +128,7 @@ module Cache
       end
 
       def cache_key_for_index(attributes)
-        attributes.flatten.join(':')
+        attributes.flatten.join('/')
       end
 
       def find_with_write_through_cache(cache_keys, options)
@@ -145,7 +141,7 @@ module Cache
 
       def convert_to_array(cache_keys, object)
         if object.kind_of?(Hash)
-          cache_keys.collect { |cache_key| object[cache_key] }.flatten.compact
+          cache_keys.collect { |key| object[key] }.flatten.compact
         else
           Array(object)
         end
@@ -159,17 +155,16 @@ module Cache
         if objects.first.kind_of?(ActiveRecord::Base)
           objects
         else
-          cache_keys = objects.collect { |id| "id:#{id}" }
+          cache_keys = objects.collect { |id| "id/#{id}" }
           objects = get(cache_keys, &method(:find_from_keys))
           convert_to_array(cache_keys, objects)
         end
       end
 
       def find_from_keys(*missing_keys)
-        missing_ids = missing_keys.flatten.collect { |key| key.split(':')[1].to_i }
+        missing_ids = missing_keys.flatten.collect { |key| key.split('/')[2].to_i }
         find_from_ids_without_cache(missing_ids, {})
       end
-
     end
   end
 end

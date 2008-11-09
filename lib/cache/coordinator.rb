@@ -44,8 +44,19 @@ module Cache
       include Config
 
       module Accessors
-        def get(key, &block)
-          cache_repository.get(cache_key(key)) || (block ? block.call : nil)
+        def get(keys, &block)
+          case keys
+          when Array
+            keys.collect! { |key| cache_key(key) }
+            hits = cache_repository.get_multi(keys)
+            if (missed_keys = keys - hits.keys).any?
+              missed_values = block.call(*missed_keys)
+              hits.merge!(Hash[*missed_keys.zip(Array(missed_values)).flatten])
+            end
+            hits
+          else
+            cache_repository.get(cache_key(keys)) || (block ? block.call : nil)
+          end
         end
 
         def set(key, value, ttl)
@@ -57,7 +68,7 @@ module Cache
         end
 
         def cache_key(postfix)
-          "#{base_class.name}:#{postfix.gsub(' ', '+')}"
+          "#{base_class.name}/#{postfix.gsub(' ', '+')}"
         end
       end
       include Accessors
