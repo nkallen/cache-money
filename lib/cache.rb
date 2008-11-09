@@ -42,16 +42,13 @@ module Cache
     module ClassMethods
       def self.extended(active_record_class)
         active_record_class.class_eval do
+          class_inheritable_reader :cache_config
           class << self
             alias_method_chain :transaction, :cache_transaction
           end
                   
           include Finders
         end
-      end
-      
-      def cache_config
-        read_inheritable_attribute :cache_config
       end
       
       def indices
@@ -84,7 +81,7 @@ module Cache
       end
       
       def cache_key(postfix)
-        "#{name}:#{postfix.gsub(' ', '+')}"
+        "#{base_class.name}:#{postfix.gsub(' ', '+')}"
       end
       
       def transaction_with_cache_transaction(&block) 

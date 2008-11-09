@@ -2,16 +2,15 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
 module Cache
   describe WriteThrough do
-    class Story < ActiveRecord::Base
-    end
-    
+
     before :suite do
       Character = Class.new(ActiveRecord::Base)
       Story = Class.new(ActiveRecord::Base)
+      Story.index :on => [:id, :title, [:id, :title]], :repository => Transactional.new($memcache, $lock)
+
       Epic = Class.new(Story)
       Oral = Class.new(Epic)
       Story.has_many :characters
-      Story.index :on => [:id, :title, [:id, :title]], :repository => Transactional.new($memcache, $lock)
     end
   
     before :each do
@@ -143,36 +142,34 @@ module Cache
       it "acquires and releases locks, in order, for all indices to be written" do
         story = Story.create!(:title => original_title = "original title")
         story.title = tentative_title = "tentative title"
-        keys = ["id:#{story.id}", "title:#{original_title}", "title:#{story.title}", "id:#{story.id}:title:#{original_title}", "id:#{story.id}:title:#{tentative_title}"].sort
+        keys = ["id:#{story.id}", "title:#{original_title}", "title:#{story.title}", "id:#{story.id}:title:#{original_title}", "id:#{story.id}:title:#{tentative_title}"]
         
-        mock = keys.inject(mock = mock($lock)) do |mock, key|
-          mock.acquire_lock(key).with(key = Story.cache_key(key)).then
-        end
-        keys.inject(mock) do |mock, key|
-          mock.release_lock(key).with(key = Story.cache_key(key)).then
-        end
+        locks_should_be_acquired_and_released_in_order($lock, keys)
         story.save!
       end
 
       it "acquires and releases locks on destroy" do
         story = Story.create!(:title => "title")
-        keys = ["id:#{story.id}", "title:#{story.title}", "id:#{story.id}:title:#{story.title}"].sort
+        keys = ["id:#{story.id}", "title:#{story.title}", "id:#{story.id}:title:#{story.title}"]
         
-        mock = keys.inject(mock = mock($lock)) do |mock, key|
+        locks_should_be_acquired_and_released_in_order($lock, keys)
+        story.destroy
+      end
+      
+      def locks_should_be_acquired_and_released_in_order(lock, keys)
+        mock = keys.sort!.inject(mock = mock($lock)) do |mock, key|
           mock.acquire_lock.with(Story.cache_key(key)).then
         end
         keys.inject(mock) do |mock, key|
           mock.release_lock.with(Story.cache_key(key)).then
         end
-        story.destroy
-      end 
+      end
     end
 
     describe "STI" do
       it "always writes to the base-class cache" do
         story = Story.create!(:title => title = 'foo')
         feature = Epic.create!(:title => title)
-        Story.cache_repository.flush_all
         detail = Oral.create!(:title => title)
         Story.fetch_cache("title:#{story.title}").should == [story.id, feature.id, detail.id]
       end
