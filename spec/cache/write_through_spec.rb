@@ -2,6 +2,9 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
 module Cache
   describe WriteThrough do
+    class Story < ActiveRecord::Base
+    end
+    
     before :suite do
       Character = Class.new(ActiveRecord::Base)
       Story = Class.new(ActiveRecord::Base)
@@ -43,7 +46,7 @@ module Cache
           story = Story.new(:title => 'I am lugubrious')
           story.characters.build(:name => 'How am I holy?')
           story.save!
-          Story.fetch_cache("id:#{story.id}").first.characters.should_not be_loaded
+          Story.fetch_cache("id:#{story.id}").first.characters.loaded?.should_not be
         end
     
         describe 'when the value is nil' do

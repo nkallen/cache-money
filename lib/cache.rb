@@ -14,7 +14,7 @@ class ActiveRecord::Base
   class << self
     def index(options = {})
       include Cache::Coordinator
-      @cache_config = options
+      write_inheritable_attribute :cache_config, options
     end
   end
 end
@@ -43,12 +43,15 @@ module Cache
       def self.extended(active_record_class)
         active_record_class.class_eval do
           class << self
-            attr_reader :cache_config
             alias_method_chain :transaction, :cache_transaction
           end
-          
+                  
           include Finders
         end
+      end
+      
+      def cache_config
+        read_inheritable_attribute :cache_config
       end
       
       def indices
