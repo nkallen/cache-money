@@ -23,7 +23,7 @@ module Cache
         update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, clone)
       end
     end
-    
+
     def remove_from_write_through_cache
       indices.each do |attributes_in_the_index|
         old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(attributes_in_the_index)
@@ -36,7 +36,7 @@ module Cache
         old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(attributes_in_the_index)
         cache_key_for_index(old_attribute_value_pairs)
       end
-      cache_keys.each { |key| self.class.expire_cache(key) }
+      cache_keys.each { |key| self.class.expire(key) }
     end
 
     private
@@ -66,7 +66,7 @@ module Cache
     def original_id
       id
     end
-    
+
     def add_to_index_with_minimal_network_operations(attribute_value_pairs, object)
       if primary_key?(attribute_value_pairs)
         add_object_to_primary_key_cache(attribute_value_pairs, object)
@@ -82,18 +82,18 @@ module Cache
 
     def add_object_to_cache(attribute_value_pairs, object, overwrite = true)
       return if invalid_cache_key?(attribute_value_pairs)
-      
+
       key, cache_value, cache_hit = get_key_and_value_at_index(attribute_value_pairs)
       if !cache_hit || overwrite
         object_to_add = serializable_object_formatted_for_index(attribute_value_pairs, object)
         set(key, (cache_value + [object_to_add]).uniq, ttl)
       end
     end
-    
+
     def invalid_cache_key?(attribute_value_pairs)
       attribute_value_pairs.collect { |_,value| value }.any? {|x| x.nil? }
     end
-    
+
     def update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, object)
       if index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
         remove_object_from_cache(old_attribute_value_pairs)
@@ -104,10 +104,10 @@ module Cache
         add_object_to_cache(new_attribute_value_pairs, object, false)
       end
     end
-    
+
     def remove_object_from_cache(attribute_value_pairs, object = self)
       return if invalid_cache_key?(attribute_value_pairs)
-      
+
       key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
       object_to_remove = serializable_object_formatted_for_index(attribute_value_pairs, object)
       self.class.set(key, (cache_value - [object_to_remove]).uniq, ttl)
@@ -128,7 +128,7 @@ module Cache
     def get_key_and_value_at_index(attribute_value_pairs)
       key = cache_key_for_index(attribute_value_pairs)
       cache_hit = true
-      cache_value = fetch_cache(key) do
+      cache_value = get(key) do
         cache_hit = false
         conditions = Hash[*attribute_value_pairs.flatten]
         self.class.base_class.send(:find_every_without_cache, :select => 'id', :conditions => conditions).collect do |object|

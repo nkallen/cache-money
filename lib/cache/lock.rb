@@ -4,7 +4,7 @@ module Cache
 
     DEFAULT_RETRY = 5
     DEFAULT_EXPIRY = 30
-    
+
     def initialize(cache)
       @cache = cache
     end
@@ -47,6 +47,7 @@ module Cache
 
     def recursive_lock?(key)
       @cache.get("lock:#{key}") == Process.pid
-    end    
+    end
+
   end
 end

@@ -21,7 +21,7 @@ module Cache
           end
         end
       end
-      
+
       # User.find(:first, ...), User.find_by_foo(...)
       def find_initial_with_cache(options)
         if cache_key = safe_for_write_through_cache?(options)
@@ -137,7 +137,7 @@ module Cache
 
       def find_with_write_through_cache(cache_keys, options)
         missed_keys = nil
-        objects = fetch_cache(cache_keys) { |*missed_keys| yield(missed_keys) }
+        objects = get(cache_keys) { |*missed_keys| yield(missed_keys) }
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, options)
         deserialize_objects(objects)
@@ -160,7 +160,7 @@ module Cache
           objects
         else
           cache_keys = objects.collect { |id| "id:#{id}" }
-          objects = fetch_cache(cache_keys, &method(:find_from_keys))
+          objects = get(cache_keys, &method(:find_from_keys))
           convert_to_array(cache_keys, objects)
         end
       end
