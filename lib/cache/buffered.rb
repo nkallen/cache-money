@@ -12,7 +12,7 @@ module Cache
       @buffer = {}
       @commands = []
       @cache = memcache
-      $lock = lock
+      @lock = lock
     end
 
     def pop
@@ -20,7 +20,7 @@ module Cache
     end
 
     def push
-      NestedBuffered.new(self, $lock)
+      NestedBuffered.new(self, @lock)
     end
 
     def get(key, *options)
@@ -69,13 +69,13 @@ module Cache
     def flush
       sorted_keys = @commands.collect {|x| x.key }.uniq.sort
       sorted_keys.each do |key|
-        $lock.acquire_lock(key)
+        @lock.acquire_lock(key)
       end
       perform_commands
     ensure
       @buffer = {}
       sorted_keys.each do |key|
-        $lock.release_lock(key)
+        @lock.release_lock(key)
       end
     end
 

@@ -5,7 +5,7 @@ module Cache
     def self.included(active_record_class)
       active_record_class.class_eval do
         extend ClassMethods
-        delegate :ttl, :set, :get, :to => "self.class"
+        delegate :ttl, :set, :get, :indices, :to => "self.class"
         include WriteThrough, Finders
 
         class_inheritable_reader :cache_config
@@ -59,15 +59,12 @@ module Cache
         def cache_key(postfix)
           "#{base_class.name}:#{postfix.gsub(' ', '+')}"
         end
-
       end
       include Accessors
 
       def transaction_with_cache_transaction(&block)
-
         cache_repository.transaction { transaction_without_cache_transaction(&block) }
       end
-
     end
   end
 end

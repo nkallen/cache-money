@@ -40,10 +40,6 @@ module Cache
     end
 
     private
-    def indices
-      self.class.send :indices
-    end
-
     def shallow_clone
       clone = self.class.new
       clone.instance_variable_set("@attributes", @attributes)
@@ -110,7 +106,7 @@ module Cache
 
       key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
       object_to_remove = serializable_object_formatted_for_index(attribute_value_pairs, object)
-      self.class.set(key, (cache_value - [object_to_remove]).uniq, ttl)
+      set(key, (cache_value - [object_to_remove]).uniq, ttl)
     end
 
     def index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)

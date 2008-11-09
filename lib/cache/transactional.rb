@@ -3,8 +3,8 @@ module Cache
     attr_reader :memcache
 
     def initialize(memcache, lock)
-      $memcache, @cache = [memcache, memcache]
-      $lock = lock
+      @memcache, @cache = [memcache, memcache]
+      @lock = lock
     end
 
     def transaction
@@ -28,7 +28,7 @@ module Cache
 
     private
     def begin_transaction
-      @cache = Buffered.push(@cache, $lock)
+      @cache = Buffered.push(@cache, @lock)
     end
 
     def end_transaction
