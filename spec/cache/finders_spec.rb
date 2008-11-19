@@ -6,11 +6,13 @@ module Cache
       Story = Class.new(ActiveRecord::Base)
       Character = Class.new(ActiveRecord::Base)
       Story.has_many :characters
-      Story.index :on => [:id, :title, [:id, :title]], :repository => Transactional.new($memcache, $lock)
+      Story.index :on => [:id, :title, [:id, :title]], :repository => repository = Transactional.new($memcache, $lock)
+      Character.index :on => [:id, [:name, :story_id], [:id, :story_id]], :repository => repository
     end
 
     before :each do
       Story.delete_all
+      Character.delete_all
     end
 
     describe "#find" do
@@ -113,6 +115,30 @@ module Cache
           it 'raises an exception' do
             lambda { Story.find([1, 2, 3]) }.should raise_error(ActiveRecord::RecordNotFound)
           end
+        end
+        
+        describe 'when given limits and offsets' do
+          describe 'find([1, 2, ...], :limit => ..., :offset => ...)' do
+            it "returns the correct slice of objects" do
+              character1 = Character.create!(:name => "Sam", :story_id => 1)
+              character2 = Character.create!(:name => "Sam", :story_id => 1)
+              character3 = Character.create!(:name => "Sam", :story_id => 1)
+              Character.find(
+                [character1.id, character2.id, character3.id],
+                :conditions => { :name => "Sam", :story_id => 1 }, :limit => 2
+              ).should == [character1, character2]
+            end
+          end
+          
+          describe 'find([1], :limit => 0)' do
+            it "raises an exception" do
+              character = Character.create!(:name => "Sam", :story_id => 1)
+              lambda do
+                Character.find([character.id], :conditions => { :name => "Sam", :story_id => 1 }, :limit => 0)
+              end.should raise_error(ActiveRecord::RecordNotFound)
+            end
+          end
+
         end
       end
 
@@ -308,26 +334,46 @@ module Cache
               end
             end
 
-            #   it "should read through the cache with find" do
-            #     story = Story.create!(:title => "Story 1")
-            #     character = story.characters.create(:name => "Sam")
-            #     Character.connection.expects(:execute).never
-            #
-            #     story.characters.find(character.id).should == character
-            #   end
-            #
-            #   it "should read through the cache with find when given multiple ids" do
-            #     story = Story.create!(:title => "Story 1")
-            #     character1 = story.characters.create(:name => "Sam")
-            #     character2 = story.characters.create(:name => "Nick")
-            #     Character.connection.expects(:execute).never
-            #
-            #     story.characters.find(character1.id, character2.id).should == [character1, character2]
-            #   end
+            describe 'has_many associations' do
+              describe 'find(1)' do
+                it "does not use the database" do
+                  story = Story.create!
+                  character = story.characters.create
+                  mock(Character.connection).execute.never
+                  story.characters.find(character.id).should == character
+                end
+              end
+              
+              describe 'find(1, 2, ...)' do
+                it "does not use the database" do
+                  story = Story.create!
+                  character1 = story.characters.create!
+                  character2 = story.characters.create!
+                  mock(Character.connection).execute.never
+                  story.characters.find(character1.id, character2.id).should == [character1, character2]
+                end
+              end
+              
+              describe 'find_by_attr' do
+                it "does not use the database" do
+                  story = Story.create!
+                  character = story.characters.create!
+                  mock(Character.connection).execute.never
+                  story.characters.find_by_id(character.id).should == character
+                end
+                
+              end
+            end
           end
         end
 
         describe 'find(:all)' do
+          it "uses the database, not the cache" do
+            character = Character.create!
+            mock(Character).fetch_cache.never
+            Character.find(:all).should == [character]
+          end
+
           describe 'find(:all, :conditions => {...})' do
             it 'does not use the database' do
               story1 = Story.create!(:title => title = "title")
@@ -336,23 +382,19 @@ module Cache
               Story.find(:all, :conditions => { :title => story1.title }).should == [story1, story2]
             end
           end
-          #   it "should not use the cache when none of the indices match" do
-          #     character = Character.create(:name => "Sam", :story_id => 1)
-          #     Character.expects(:fetch_cache).never
-          #     Character.find(:all).should == [character]
-          #   end
-
-          #   it "cached attributes should support limits and offsets" do
-          #     character1 = Character.create(:name => "Sam", :story_id => 1)
-          #     character2 = Character.create(:name => "Sam", :story_id => 1)
-          #     character3 = Character.create(:name => "Sam", :story_id => 1)
-          #     Character.connection.expects(:execute).never
-          #
-          #     Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :limit => 1).should == [character1]
-          #     Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :offset => 1).should == [character2, character3]
-          #     Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :limit => 1, :offset => 1).should == [character2]
-          #   end
-
+          
+          describe 'find(:all, :limit => ..., :offset => ...)' do
+            it "cached attributes should support limits and offsets" do
+              character1 = Character.create(:name => "Sam", :story_id => 1)
+              character2 = Character.create(:name => "Sam", :story_id => 1)
+              character3 = Character.create(:name => "Sam", :story_id => 1)
+              mock(Character.connection).execute.never
+        
+              Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :limit => 1).should == [character1]
+              Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :offset => 1).should == [character2, character3]
+              Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :limit => 1, :offset => 1).should == [character2]
+            end
+          end
         end
 
         describe 'find([1, 2, ...], :conditions => ...)' do
@@ -362,19 +404,6 @@ module Cache
             mock(Story).fetch_cache.never
             Story.find([story1.id, story2.id], :conditions => "stories.id <= #{story2.id } AND type IS NULL")
           end
-
-          #   it "should support limits and offsets correctly when find is called with ids" do
-          #     character1 = Character.create(:name => "Sam", :story_id => 1)
-          #     character2 = Character.create(:name => "Sam", :story_id => 1)
-          #     character3 = Character.create(:name => "Sam", :story_id => 1)
-          #     Character.find([character1.id, character2.id, character3.id], :conditions => { :name => "Sam"}, :limit => 2).should == [character1, character2]
-          #   end
-          #
-          #   it "should support limits and offsets correctly when find is called with ONE id" do
-          #     character = Character.create(:name => "Sam", :story_id => 1)
-          #     lambda { Character.find([character.id], :conditions => { :name => "Sam"}, :limit => 0) }.should.raise(ActiveRecord::RecordNotFound)
-          #   end
-
         end
 
         describe '#find_by_attr' do
@@ -398,12 +427,6 @@ module Cache
             end
           end
 
-          #   it "should read through the cache with find_by_" do
-          #     story = Story.create!(:title => "Story 1")
-          #     character = story.characters.create(:name => "Sam")
-          #     Character.connection.expects(:execute).never
-          #     story.characters.find_by_id(character.id).should == character
-          #   end
         end
       end
 

@@ -15,6 +15,7 @@ module Cache
 
     before :each do
       Story.delete_all
+      Character.delete_all
     end
 
     describe 'ClassMethods' do
@@ -131,7 +132,7 @@ module Cache
       describe "#expire_cache" do
         it "expires cache entries at keys where the object is indexed" do
           story = Story.create!(:title => "some stuff")
-          story.expire_cache
+          story.expire_write_through_cache
           Story.get("id/#{story.id}").should == nil
           Story.get("title/#{story.title}").should == nil
         end

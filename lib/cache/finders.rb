@@ -75,8 +75,6 @@ module Cache
 
       private
       def safe_for_write_through_cache?(options1, options2 = scope(:find) || {})
-        return nil if self != base_class
-
         if safe_options_for_write_through_cache?(options1) && safe_options_for_write_through_cache?(options2)
           return nil unless partial_index_1 = attribute_value_pairs_for_conditions(options1[:conditions])
           return nil unless partial_index_2 = attribute_value_pairs_for_conditions(options2[:conditions])
@@ -105,11 +103,12 @@ module Cache
         end
       end
 
+      AND = /\s+AND\s+/i
+      KEY_EQ_VALUE = /^(?:`?(\w+)`?\.)?`?(\w+)`? = (\d+|\?)$/ # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123, and id = 123
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup
-        conditions.split(/\s+AND\s+/i).inject([]) do |indices, condition|
-          # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123, and id = 123
-          matched, table_name, column_name, sql_value = *(/^(?:`?(\w+)`?\.)?`?(\w+)`? = (\d+|\?)$/.match(condition))
+        conditions.split(AND).inject([]) do |indices, condition|
+          matched, table_name, column_name, sql_value = *(KEY_EQ_VALUE.match(condition))
           if matched && table_name_is_name_of_current_active_record_class?(table_name)
             value = sql_value == '?' ? values.shift : sql_value
             indices << [column_name, value]
