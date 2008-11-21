@@ -413,7 +413,6 @@ module Cache
 
             end
           end
-
         end
       end
 
@@ -430,37 +429,39 @@ module Cache
     end
 
     describe 'calculations' do
+      before do
+        @stories = [Story.create!(:title => @title = 'asdf'), Story.create!(:title => @title)]
+      end
+      
       describe '#count(:all, :conditions => ...)' do
-        it "should get count from the cache" do
-          stories = [Story.create!(:title => title = 'asdf'), Story.create!(:title => title)]
+        it "does not use the database" do
           mock(Story.connection).execute.never
-          Story.count(:all, :conditions => { :title => title }).should == stories.size
+          Story.count(:all, :conditions => { :title => @title }).should == @stories.size
+        end
+      end
+      
+      describe '#count(:column, :conditions => ...)' do
+        it "uses the database, not the cache" do
+          mock(Story).fetch_cache.never
+          Story.count(:title, :conditions => { :title => @title }).should == @stories.size
         end
       end
 
-      #   it "should not get count from the cache if column is specified" do
-      #     stories = [Story.create!(:title => title = 'asdf'), Story.create!(:title => title)]
-      #     Story.expects(:fetch_cache).never
-      #     Story.count(:type, :conditions => { :title => title }).should == Story.find(:all, :conditions => "type IS NOT NULL").size
-      #   end
-      #
-      #   it "should generate the correct query when counts do not use the cache" do
-      #     Story.destroy_all
-      #     Story.create!(:title => title = "a title")
-      #     Story.create!(:title => title)
-      #     Story.create!(:title =>  "another title")
-      #
-      #     Story.expects(:fetch_cache).never
-      #     Story.count(:all, :distinct => true, :select => 'title').should == 2
-      #   end
-      #
-      #   it "should support calculations without options on association proxies" do
-      #     story = Story.create!(:title => "blah")
-      #     story.characters.create!(:name => 'hi')
-      #     story.characters.sum(:id)
-      #   end
-      # end
-
+      describe '#count(:all, :distinct => ..., :select => ...)' do
+        it 'uses the database, not the cache' do
+          mock(Story).fetch_cache.never
+          Story.count(:all, :distinct => true, :select => :title, :conditions => { :title => @title }).should == @stories.collect(&:title).uniq.size
+        end
+      end
+      
+      describe 'association proxies' do
+        it '#count(:all, :conditions => ...)' do
+          story = Story.create!
+          characters = [story.characters.create!(:name => name = 'name'), story.characters.create!(:name => name)]
+          mock(Story.connection).execute.never
+          story.characters.count(:all, :conditions => {:name => name}).should == characters.size
+        end
+      end
     end
 
   # context "STI" do

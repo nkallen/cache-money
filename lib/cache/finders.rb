@@ -75,7 +75,7 @@ module Cache
 
       private
       def safe_for_write_through_cache?(options1, options2 = scope(:find) || {})
-        if safe_options_for_write_through_cache?(options1) && safe_options_for_write_through_cache?(options2)
+        if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
           return nil unless partial_index_1 = attribute_value_pairs_for_conditions(options1[:conditions])
           return nil unless partial_index_2 = attribute_value_pairs_for_conditions(options2[:conditions])
           index = (partial_index_1 + partial_index_2).sort { |x, y| x[0] <=> y[0] }
@@ -85,7 +85,7 @@ module Cache
         end
       end
 
-      def safe_options_for_write_through_cache?(options)
+      def safe_options_for_cache?(options)
         return false unless options.kind_of?(Hash)
         options.except(:conditions, :readonly, :limit, :offset).values.compact.empty? && !options[:readonly]
       end
@@ -104,7 +104,7 @@ module Cache
       end
 
       AND = /\s+AND\s+/i
-      KEY_EQ_VALUE = /^(?:`?(\w+)`?\.)?`?(\w+)`? = (\d+|\?)$/ # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123, and id = 123
+      KEY_EQ_VALUE = /^\(?(?:`?(\w+)`?\.)?`?(\w+)`? = '?(\d+|\?|(?:[^']*))'?\)?$/ # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123, id = 123, id = '123', (id = 123)
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup
         conditions.split(AND).inject([]) do |indices, condition|
