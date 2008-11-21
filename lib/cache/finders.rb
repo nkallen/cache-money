@@ -104,7 +104,9 @@ module Cache
       end
 
       AND = /\s+AND\s+/i
-      KEY_EQ_VALUE = /^\(?(?:`?(\w+)`?\.)?`?(\w+)`? = '?(\d+|\?|(?:[^']*))'?\)?$/ # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123, id = 123, id = '123', (id = 123)
+      # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123; id = 123, id = ?, id = '123'; (id = 123)
+      KEY_EQ_VALUE = /^\(?(?:`?(\w+)`?\.)?`?(\w+)`? = '?(\d+|\?|(?:[^']*))'?\)?$/
+      
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup
         conditions.split(AND).inject([]) do |indices, condition|
