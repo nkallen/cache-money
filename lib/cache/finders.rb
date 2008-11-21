@@ -21,7 +21,7 @@ module Cache
       # User.find(:first, ...), User.find_by_foo(...)
       def find_initial_with_cache(options)
         if cache_key = safe_for_write_through_cache?(options)
-          find_with_write_through_cache(cache_key, options.merge(:limit => 1)) do
+          find_with_cache(cache_key, options.merge(:limit => 1)) do
             find_every_without_cache(:conditions => options[:conditions])
           end.first
         else
@@ -32,7 +32,7 @@ module Cache
       # User.find(:all, ...), User.find_all_by_foo(...)
       def find_every_with_cache(options)
         if cache_key = safe_for_write_through_cache?(options)
-          find_with_write_through_cache(cache_key, options) do
+          find_with_cache(cache_key, options) do
             find_every_without_cache(:conditions => options[:conditions])
           end
         else
@@ -49,7 +49,7 @@ module Cache
           safe_for_write_through_cache?(options, :conditions => {:id => id})
         end.compact
         if !cache_keys.empty?
-          objects = find_with_write_through_cache(cache_keys, options, &method(:find_from_keys))
+          objects = find_with_cache(cache_keys, options, &method(:find_from_keys))
 
           case objects.size
           when 0
@@ -66,8 +66,8 @@ module Cache
 
       # User.count(:all), User.count, User.sum(...)
       def calculate_with_cache(operation, column_name, options = {})
-        if column_name == :all && safe_for_write_through_cache?(options)
-          find_every_with_cache(options).send(operation)
+        if column_name == :all && cache_key = safe_for_write_through_cache?(options)
+          get("#{cache_key}/#{operation}", :raw => true) { calculate_without_cache(operation, column_name, options) }.to_i
         else
           calculate_without_cache(operation, column_name, options)
         end
@@ -130,7 +130,7 @@ module Cache
         attributes.flatten.join('/')
       end
 
-      def find_with_write_through_cache(cache_keys, options)
+      def find_with_cache(cache_keys, options)
         missed_keys = nil
         objects = get(cache_keys) { |*missed_keys| yield(missed_keys) }
         objects = convert_to_array(cache_keys, objects)

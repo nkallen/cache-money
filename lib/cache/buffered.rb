@@ -67,7 +67,7 @@ module Cache
     end
 
     def flush
-      sorted_keys = @commands.collect {|x| x.key }.uniq.sort
+      sorted_keys = @commands.select(&:requires_lock?).collect(&:key).uniq.sort
       sorted_keys.each do |key|
         @lock.acquire_lock(key)
       end
@@ -112,6 +112,10 @@ module Cache
       @name = name
       @key = key
       @args = args
+    end
+    
+    def requires_lock?
+      @name == :set
     end
 
     def call(cache)

@@ -19,6 +19,19 @@ Spec::Runner.configure do |config|
 
   config.before :each do
     $memcache.flush_all
+    Story.delete_all
+    Character.delete_all
   end
+  
+  config.before :suite do
+    Story = Class.new(ActiveRecord::Base)
+    Character = Class.new(ActiveRecord::Base)
+    Story.has_many :characters
+    Story.index :on => [:id, :title, [:id, :title]], :repository => repository = Cache::Transactional.new($memcache, $lock)
+    Character.index :on => [:id, [:name, :story_id], [:id, :story_id]], :repository => repository
 
+    Epic = Class.new(Story)
+    Oral = Class.new(Epic)
+    Story.has_many :characters
+  end
 end

@@ -44,7 +44,7 @@ module Cache
       include Config
 
       module Accessors
-        def get(keys, &block)
+        def get(keys, options = {}, &block)
           case keys
           when Array
             keys.collect! { |key| cache_key(key) }
@@ -55,12 +55,17 @@ module Cache
             end
             hits
           else
-            cache_repository.get(cache_key(keys)) || (block ? block.call : nil)
+            cache_repository.get(cache_key(keys), options[:raw]) || (block ? block.call : nil)
           end
         end
 
         def set(key, value, ttl)
           cache_repository.set(cache_key(key), value, ttl)
+        end
+        
+        def incr(key, delta = 1)
+          cache_repository.incr(cache_key(key), delta) ||
+            cache_repository.set(cache_key(key), delta) && cache_repository.incr(cache_key(key), delta)
         end
 
         def expire(key)

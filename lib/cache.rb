@@ -11,6 +11,8 @@ require 'cache/finders'
 require 'cache/buffered'
 require 'cache/coordinator'
 
+require 'cache/util/array'
+
 class ActiveRecord::Base
   class << self
     def index(options = {})

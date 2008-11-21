@@ -2,19 +2,6 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
 module Cache
   describe Finders do
-    before :suite do
-      Story = Class.new(ActiveRecord::Base)
-      Character = Class.new(ActiveRecord::Base)
-      Story.has_many :characters
-      Story.index :on => [:id, :title, [:id, :title]], :repository => repository = Transactional.new($memcache, $lock)
-      Character.index :on => [:id, [:name, :story_id], [:id, :story_id]], :repository => repository
-    end
-
-    before :each do
-      Story.delete_all
-      Character.delete_all
-    end
-
     describe "#find" do
       describe 'when given ids' do
         describe 'when the cache is already populated' do
@@ -338,7 +325,7 @@ module Cache
               describe 'find(1)' do
                 it "does not use the database" do
                   story = Story.create!
-                  character = story.characters.create
+                  character = story.characters.create!
                   mock(Character.connection).execute.never
                   story.characters.find(character.id).should == character
                 end
@@ -443,14 +430,14 @@ module Cache
     end
 
     describe 'calculations' do
-      #   it "should get count from the cache" do
-      #     stories = [Story.create!(:title => title = 'asdf'), Story.create!(:title => title)]
-      #     Story.connection.expects(:execute).never
-      #     Story.expects(:fetch_cache).with("title:#{title}").returns(stories.map(&:id))
-      #     Story.expects(:fetch_cache).with(keys = stories.collect { |story| "id:#{story.id}" }).returns(Hash[*keys.zip(stories).flatten])
-      #     Story.count(:all, :conditions => { :title => title }).should == stories.size
-      #   end
-      #
+      describe '#count(:all, :conditions => ...)' do
+        it "should get count from the cache" do
+          stories = [Story.create!(:title => title = 'asdf'), Story.create!(:title => title)]
+          mock(Story.connection).execute.never
+          Story.count(:all, :conditions => { :title => title }).should == stories.size
+        end
+      end
+
       #   it "should not get count from the cache if column is specified" do
       #     stories = [Story.create!(:title => title = 'asdf'), Story.create!(:title => title)]
       #     Story.expects(:fetch_cache).never

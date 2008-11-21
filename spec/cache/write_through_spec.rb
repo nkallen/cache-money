@@ -2,22 +2,6 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
 module Cache
   describe WriteThrough do
-
-    before :suite do
-      Story = Class.new(ActiveRecord::Base)
-      Character = Class.new(ActiveRecord::Base)
-      Story.index :on => [:id, :title, [:id, :title]], :repository => Transactional.new($memcache, $lock)
-
-      Epic = Class.new(Story)
-      Oral = Class.new(Epic)
-      Story.has_many :characters
-    end
-
-    before :each do
-      Story.delete_all
-      Character.delete_all
-    end
-
     describe 'ClassMethods' do
       describe 'after create' do
         it "inserts all indexed attributes into the cache" do

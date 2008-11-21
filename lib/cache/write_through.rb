@@ -17,19 +17,19 @@ module Cache
       end
 
       def add_to_write_through_cache
-        Private::unfold(self) { |klass| klass.add_to_write_through_cache(self) }
+        unfold { |klass| klass.add_to_write_through_cache(self) }
       end
 
       def update_write_through_cache
-        Private::unfold(self) { |klass| klass.update_write_through_cache(self) }
+        unfold { |klass| klass.update_write_through_cache(self) }
       end
 
       def remove_from_write_through_cache
-        Private::unfold(self) { |klass| klass.remove_from_write_through_cache(self) }
+        unfold { |klass| klass.remove_from_write_through_cache(self) }
       end
 
       def expire_write_through_cache
-        Private::unfold(self) { |klass| klass.expire_write_through_cache(self) }
+        unfold { |klass| klass.expire_write_through_cache(self) }
       end
 
       def shallow_clone
@@ -39,15 +39,12 @@ module Cache
         clone
       end
       
-      module Private
-        extend self
-
-        def unfold(object)
-          klass = object.class
-          while klass < ActiveRecord::Base && klass.ancestors.include?(WriteThrough)
-            yield klass
-            klass = klass.superclass
-          end
+      private
+      def unfold
+        klass = self.class
+        while klass < ActiveRecord::Base && klass.ancestors.include?(WriteThrough)
+          yield klass
+          klass = klass.superclass
         end
       end
     end
@@ -117,6 +114,7 @@ module Cache
         if !cache_hit || overwrite
           object_to_add = serializable_object_formatted_for_index(attribute_value_pairs, object)
           set(key, (cache_value + [object_to_add]).uniq, ttl)
+          incr("#{key}/count")
         end
       end
 
