@@ -121,7 +121,7 @@ module Cache
       end
 
       def invalid_cache_key?(attribute_value_pairs)
-        attribute_value_pairs.collect { |_,value| value }.any? {|x| x.nil? }
+        attribute_value_pairs.collect { |_,value| value }.any? { |x| x.nil? }
       end
 
       def update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, object)

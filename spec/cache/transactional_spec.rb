@@ -385,11 +385,9 @@ module Cache
             @cache.get('key1').should == @value
             @cache.set('key2', @value)
             @cache.transaction do
-
               @cache.get('key1').should == @value
               @cache.get('key2').should == @value
               @cache.set('key3', @value)
-
             end
           end
           @cache.get('key1').should == @value

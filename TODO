@@ -1,16 +1,22 @@
-* Use libmemcached rather than memcached-client
+* Implement read-through strategy using add
 * Reorganize transactional spec
+* Deal with TTL issues
+* Clarify terminology around cache/key/index, etc.
+* always index on :id
+* reify index specification
+* Uncovered update case
+
+* Deal with namespace pollution * scope private methods
+* rake brittspace
 * Incorporate local_cache
 * Incorporate cache_mock
 * Release new railsprof plugin
 * Release test helper (timings etc.)
-* Deal with TTL issues
-* Implement read-through strategy using add
+
 * Handle append strategy using add rather than set to avoid race condition
-* Uncovered update case
-* Deal with namespace pollution * scope private methods
-* Clarify terminology around cache/key/index, etc.
-* always index on :id
-* nomenclature: cache/index/key/value
-* reify index specification
-* reify query object?
+* move to :
+
+class Foo
+  index :bar
+  index []
+end

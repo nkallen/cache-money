@@ -43,7 +43,7 @@ module Cache
       # User.find(1), User.find(1, 2, 3), User.find([1, 2, 3]), User.find([])
       def find_from_ids_with_cache(ids, options)
         expects_array = ids.first.kind_of?(Array)
-        sanitized_ids = ids.flatten.compact.uniq.map {|x| x.to_i }
+        sanitized_ids = ids.flatten.compact.uniq.map { |x| x.to_i }
 
         cache_keys = sanitized_ids.collect do |id|
           safe_for_write_through_cache?(options, :conditions => {:id => id})

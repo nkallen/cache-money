@@ -15,7 +15,7 @@ module Cache
       def indices
         @indices ||= begin
           indices = cache_config[:on] || []
-          Array(indices).collect { |i| Array(i).collect {|x| x.to_s }.sort }
+          Array(indices).collect { |i| Array(i).collect { |x| x.to_s }.sort }
         end
       end
 
