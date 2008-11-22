@@ -27,8 +27,17 @@ module Cache
       end
     
       def incr(key, delta = 1)
-        cache_repository.incr(cache_key(key), delta) ||
-          cache_repository.set(cache_key(key), delta) && cache_repository.incr(cache_key(key), delta)
+        cache_repository.incr(cache_key(key), delta) || begin
+          cache_repository.set(cache_key(key), 0)
+          cache_repository.incr(cache_key(key), x = yield)
+        end
+      end
+
+      def decr(key, delta = 1)
+        cache_repository.decr(cache_key(key), delta) || begin
+          cache_repository.set(cache_key(key), 0)
+          cache_repository.incr(cache_key(key), yield)
+        end
       end
 
       def expire(key)

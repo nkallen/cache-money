@@ -93,7 +93,7 @@ module Cache
 
                 describe 'when the attributes are non-integers' do
                   it 'uses the database, not the cache' do
-                    story = Story.create(:title => "title")
+                    story = Story.create!(:title => "title")
                     mock(Story.connection).execute.never
                     Story.find(:first, :conditions => "`stories`.title = '#{story.title }'") \
                       .should == story
@@ -122,14 +122,14 @@ module Cache
 
             describe 'find(:first, :conditions => {...})' do
               it "does not use the database" do
-                story = Story.create(:title => "Sam")
+                story = Story.create!(:title => "Sam")
                 mock(Story.connection).execute.never
                 Story.find(:first, :conditions => { :id => story.id, :title => story.title }).should == story
               end
 
               describe 'regardless of hash order' do
                 it 'does not use the database' do
-                  story = Story.create(:title => "Sam")
+                  story = Story.create!(:title => "Sam")
                   mock(Story.connection).execute.never
                   Story.find(:first, :conditions => { :id => story.id, :title => story.title }).should == story
                   Story.find(:first, :conditions => { :title => story.title, :id => story.id }).should == story
@@ -212,9 +212,9 @@ module Cache
           
           describe 'find(:all, :limit => ..., :offset => ...)' do
             it "cached attributes should support limits and offsets" do
-              character1 = Character.create(:name => "Sam", :story_id => 1)
-              character2 = Character.create(:name => "Sam", :story_id => 1)
-              character3 = Character.create(:name => "Sam", :story_id => 1)
+              character1 = Character.create!(:name => "Sam", :story_id => 1)
+              character2 = Character.create!(:name => "Sam", :story_id => 1)
+              character3 = Character.create!(:name => "Sam", :story_id => 1)
               mock(Character.connection).execute.never
         
               Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :limit => 1).should == [character1]
@@ -260,7 +260,6 @@ module Cache
             it "does not use the database" do
               story, epic, oral = Story.create!(:title => title = 'foo'), Epic.create!(:title => title), Oral.create!(:title => title)
               mock(Story.connection).execute.never
-
               Story.find(:all, :conditions => { :title => title }).should == [story, epic, oral]
               Epic.find(:all, :conditions => { :title => title }).should == [epic, oral]
               Oral.find(:all, :conditions => { :title => title }).should == [oral]

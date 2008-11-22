@@ -11,3 +11,6 @@
 * Deal with namespace pollution * scope private methods
 * Clarify terminology around cache/key/index, etc.
 * always index on :id
+* nomenclature: cache/index/key/value
+* reify index specification
+* reify query object?

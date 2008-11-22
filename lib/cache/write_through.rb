@@ -116,7 +116,7 @@ module Cache
         if !cache_hit || overwrite
           object_to_add = serializable_object_formatted_for_index(attribute_value_pairs, object)
           set(key, (cache_value + [object_to_add]).uniq, DEFAULT_TTL)
-          incr("#{key}/count")
+          incr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
         end
       end
 
@@ -141,6 +141,7 @@ module Cache
         key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
         object_to_remove = serializable_object_formatted_for_index(attribute_value_pairs, object)
         set(key, (cache_value - [object_to_remove]).uniq, DEFAULT_TTL)
+        decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
       end
 
       def index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
@@ -166,6 +167,11 @@ module Cache
           end
         end
         [key, cache_value, cache_hit]
+      end
+      
+      def calculate_at_index(operation, attribute_value_pairs)
+        conditions = Hash[*attribute_value_pairs.flatten]
+        calculate_without_cache(operation, :all, :conditions => conditions)
       end
     end
   end

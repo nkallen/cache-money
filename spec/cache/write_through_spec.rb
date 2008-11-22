@@ -10,19 +10,37 @@ module Cache
           Story.get("id/#{story.id}").should == [story]
         end
 
-        it "inserts multiple objects into the same cache key" do
-          story1 = Story.create!(:title => "I am delicious")
-          story2 = Story.create!(:title => "I am delicious")
-          Story.get("title/#{story1.title}").should == [story1.id, story2.id]
-        end
+        describe 'multiple objects' do
+          it "inserts multiple objects into the same cache key" do
+            story1 = Story.create!(:title => "I am delicious")
+            story2 = Story.create!(:title => "I am delicious")
+            Story.get("title/#{story1.title}").should == [story1.id, story2.id]
+          end
 
+          describe 'when the cache has been cleared after some objects were created' do
+            before do
+              @story1 = Story.create!(:title => "I am delicious")
+              $memcache.flush_all
+              @story2 = Story.create!(:title => "I am delicious")
+            end
+            
+            it 'inserts legacy objects into the cache' do
+              Story.get("title/#{@story1.title}").should == [@story1.id, @story2.id]
+            end
+            
+            it 'initializes the count to account for the legacy objects' do
+              Story.get("title/#{@story1.title}/count", :raw => true).should =~ /2/
+            end
+          end
+        end
+        
         it "does not write through the cache on non-indexed attributes" do
           story = Story.create!(:title => "Story 1", :subtitle => "Subtitle")
           Story.get("subtitle/#{story.subtitle}").should == nil
         end
 
         it "indexes on combinations of attributes" do
-          story = Story.create(:title => "Sam")
+          story = Story.create!(:title => "Sam")
           Story.get("id/#{story.id}/title/#{story.title}").should == [story.id]
         end
 
@@ -32,7 +50,14 @@ module Cache
           story.save!
           Story.get("id/#{story.id}").first.characters.loaded?.should_not be
         end
-
+        
+        it 'increments the count' do
+          story = Story.create!(:title => "Sam")
+          Story.get("title/#{story.title}/count", :raw => true).should =~ /1/
+          story = Story.create!(:title => "Sam")
+          Story.get("title/#{story.title}/count", :raw => true).should =~ /2/
+        end
+        
         describe 'when the value is nil' do
           it "does not write through the cache on indexed attributes" do
             story = Story.create!(:title => nil)
@@ -62,7 +87,13 @@ module Cache
           story.update_attributes(:title => "I am fabulous")
           Story.get(cache_key).should == []
         end
-
+        
+        it 'increments/decrements the counts of affected indices' do
+          story = Story.create!(:title => original_title = "I am delicious")
+          story.update_attributes(:title => new_title = "I am fabulous")
+          Story.get("title/#{original_title}/count", :raw => true).should =~ /0/
+          Story.get("title/#{new_title}/count", :raw => true).should =~ /1/
+        end
       end
 
       describe 'after destroy' do
@@ -80,6 +111,12 @@ module Cache
           story.destroy
           Story.get(cache_key).should == []
         end
+        
+        it 'decrements the count' do
+          story = Story.create!(:title => "I am delicious")
+          story.destroy
+          Story.get("title/#{story.title}/count", :raw => true).should =~ /0/
+        end
 
         describe 'when there are multiple items in the index' do
           it "only removes one item from the affected indices, not all of them" do
@@ -92,7 +129,7 @@ module Cache
         end
 
         describe 'when the cache is not yet populated' do
-          it "populates the cache with data, if the cache is not yet populated" do
+          it "populates the cache with data" do
             story1 = Story.create!(:title => "I am delicious")
             story2 = Story.create!(:title => "I am delicious")
             $memcache.flush_all
