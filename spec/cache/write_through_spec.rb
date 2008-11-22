@@ -154,10 +154,10 @@ module Cache
     describe "Single Table Inheritence" do
       describe 'A subclass' do
         it "writes to indices of all superclasses" do
-          oral = Oral.create!(:title => title)
-          Story.get("title/#{oral.title}").should == [oral]
-          Epic.get("title/#{oral.title}").should == [oral]
-          Oral.get("title/#{oral.title}").should == [oral]
+          oral = Oral.create!(:title => 'title')
+          Story.get("title/#{oral.title}").should == [oral.id]
+          Epic.get("title/#{oral.title}").should == [oral.id]
+          Oral.get("title/#{oral.title}").should == [oral.id]
         end
       
         describe 'when one ancestor has its own indices' do

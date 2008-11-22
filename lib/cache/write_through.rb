@@ -1,5 +1,7 @@
 module Cache
   module WriteThrough
+    DEFAULT_TTL = 12.hours
+
     def self.included(active_record_class)
       active_record_class.class_eval do
         include InstanceMethods
@@ -104,7 +106,7 @@ module Cache
 
       def add_object_to_primary_key_cache(attribute_value_pairs, object)
         key = cache_key_for_index(attribute_value_pairs)
-        set(key, [object], ttl)
+        set(key, [object], DEFAULT_TTL)
       end
 
       def add_object_to_cache(attribute_value_pairs, object, overwrite = true)
@@ -113,7 +115,7 @@ module Cache
         key, cache_value, cache_hit = get_key_and_value_at_index(attribute_value_pairs)
         if !cache_hit || overwrite
           object_to_add = serializable_object_formatted_for_index(attribute_value_pairs, object)
-          set(key, (cache_value + [object_to_add]).uniq, ttl)
+          set(key, (cache_value + [object_to_add]).uniq, DEFAULT_TTL)
           incr("#{key}/count")
         end
       end
@@ -138,7 +140,7 @@ module Cache
 
         key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
         object_to_remove = serializable_object_formatted_for_index(attribute_value_pairs, object)
-        set(key, (cache_value - [object_to_remove]).uniq, ttl)
+        set(key, (cache_value - [object_to_remove]).uniq, DEFAULT_TTL)
       end
 
       def index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
