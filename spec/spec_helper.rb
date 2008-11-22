@@ -32,6 +32,7 @@ Spec::Runner.configure do |config|
 
     Epic = Class.new(Story)
     Oral = Class.new(Epic)
+    Oral.index :on => [:id, :title], :repository => repository
     Story.has_many :characters
   end
 end

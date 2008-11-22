@@ -51,7 +51,7 @@ module Cache
 
         it "populates empty caches" do
           story = Story.create!(:title => "I am delicious")
-          Story.cache_repository.flush_all
+          $memcache.flush_all
           story.update_attributes(:title => "I am fabulous")
           Story.get("title/#{story.title}").should == [story.id]
         end
@@ -95,7 +95,7 @@ module Cache
           it "populates the cache with data, if the cache is not yet populated" do
             story1 = Story.create!(:title => "I am delicious")
             story2 = Story.create!(:title => "I am delicious")
-            Story.cache_repository.flush_all
+            $memcache.flush_all
             Story.get(cache_key = "title/#{story1.title}").should == nil
             story1.destroy
             Story.get(cache_key).should == [story2.id]
@@ -151,12 +151,23 @@ module Cache
       end
     end
 
-    describe "STI" do
-      it "always writes to the base-class cache" do
-        story = Story.create!(:title => title = 'foo')
-        feature = Epic.create!(:title => title)
-        detail = Oral.create!(:title => title)
-        Story.get("title/#{story.title}").should == [story.id, feature.id, detail.id]
+    describe "Single Table Inheritence" do
+      describe 'A subclass' do
+        it "writes to indices of all superclasses" do
+          oral = Oral.create!(:title => title)
+          Story.get("title/#{oral.title}").should == [oral]
+          Epic.get("title/#{oral.title}").should == [oral]
+          Oral.get("title/#{oral.title}").should == [oral]
+        end
+      
+        describe 'when one ancestor has its own indices' do
+          it "it only populates those indices for that ancestor" do
+            oral = Oral.create!(:title => 'title')
+            Story.get("id/#{oral.id}/title/#{oral.title}").should == [oral.id]
+            Epic.get("id/#{oral.id}/title/#{oral.title}").should == [oral.id]
+            Oral.get("id/#{oral.id}/title/#{oral.title}").should be_nil
+          end
+        end
       end
     end
   end

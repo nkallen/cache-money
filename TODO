@@ -10,3 +10,4 @@
 * Uncovered update case
 * Deal with namespace pollution * scope private methods
 * Clarify terminology around cache/key/index, etc.
+* always index on :id

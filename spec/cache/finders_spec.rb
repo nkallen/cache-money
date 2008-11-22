@@ -2,165 +2,6 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
 module Cache
   describe Finders do
-    describe "#find" do
-      describe 'when given ids' do
-        describe 'when the cache is already populated' do
-          it "should handle finds with a single id correctly" do
-            story = Story.create!(:title => 'a story')
-            Story.find(story.id).should == story
-          end
-        end
-
-        describe 'when the cache is not populated' do
-          it "handles finds with a single id correctly when cache is not already populated" do
-            story = Story.create!(:title => 'a story')
-            Story.cache_repository.flush_all
-            Story.find(story.id).should == story
-          end
-        end
-
-        describe 'when the object is destroyed' do
-          it "raises an exception" do
-            story = Story.create!(:title => "I am delicious")
-            story.destroy
-            lambda { Story.find(story.id) }.should raise_error(ActiveRecord::RecordNotFound)
-          end
-        end
-
-        describe 'when given multiple ids' do
-          describe 'when the cache is already populted' do
-            it "handles finds with multiple ids correctly" do
-              story1 = Story.create!
-              story2 = Story.create!
-              Story.find(story1.id, story2.id).should == [story1, story2]
-            end
-          end
-
-          describe 'when the cache is partially populated' do
-            it "handles finds with multiple ids correctly" do
-              story1 = Story.create!(:title => 'story 1')
-              Story.cache_repository.flush_all
-              story2 = Story.create!(:title => 'story 2')
-              Story.find(story1.id, story2.id).should == [story1, story2]
-            end
-          end
-
-          describe 'when the cache is not populated' do
-            it "should handle finds with multiple ids correctly" do
-              story1 = Story.create!
-              story2 = Story.create!
-              Story.cache_repository.flush_all
-              Story.find(story1.id, story2.id).should == [story1, story2]
-            end
-          end
-
-          describe "when given some nil arguments" do
-            it "ignores the nils" do
-              story = Story.create!
-              Story.find(story.id, nil).should == story
-            end
-          end
-        end
-
-        describe 'when given nonexisten ids' do
-          describe 'when given one nonexistent id' do
-            it 'raises an error' do
-              lambda { Story.find(1) }.should raise_error(ActiveRecord::RecordNotFound)
-            end
-          end
-
-          describe 'when given multiple nonexistent ids' do
-             it "raises an exception" do
-              lambda { Story.find(1, 2, 3) }.should raise_error(ActiveRecord::RecordNotFound)
-            end
-          end
-        end
-      end
-
-      describe 'when given objects that are not arrays' do
-        it "should coerce arguments to integers" do
-          story = Story.create!
-          Story.find(story.id.to_s).should == story
-        end
-      end
-
-      describe 'when given arrays' do
-        describe 'when given an array with valid ids' do
-          it "finds the object with that id" do
-            story = Story.create!
-            Story.find([story.id]).should == [story]
-          end
-        end
-
-        describe 'when given the empty array' do
-          it 'returns the empty array' do
-            Story.find([]).should == []
-          end
-        end
-
-        describe 'when given nonexistent ids' do
-          it 'raises an exception' do
-            lambda { Story.find([1, 2, 3]) }.should raise_error(ActiveRecord::RecordNotFound)
-          end
-        end
-        
-        describe 'when given limits and offsets' do
-          describe 'find([1, 2, ...], :limit => ..., :offset => ...)' do
-            it "returns the correct slice of objects" do
-              character1 = Character.create!(:name => "Sam", :story_id => 1)
-              character2 = Character.create!(:name => "Sam", :story_id => 1)
-              character3 = Character.create!(:name => "Sam", :story_id => 1)
-              Character.find(
-                [character1.id, character2.id, character3.id],
-                :conditions => { :name => "Sam", :story_id => 1 }, :limit => 2
-              ).should == [character1, character2]
-            end
-          end
-          
-          describe 'find([1], :limit => 0)' do
-            it "raises an exception" do
-              character = Character.create!(:name => "Sam", :story_id => 1)
-              lambda do
-                Character.find([character.id], :conditions => { :name => "Sam", :story_id => 1 }, :limit => 0)
-              end.should raise_error(ActiveRecord::RecordNotFound)
-            end
-          end
-
-        end
-      end
-
-      describe 'find(:first, ..., :offset => ...)' do
-        it "finds the object in the correct order" do
-          story1 = Story.create!(:title => 'title1')
-          story2 = Story.create!(:title => story1.title)
-          Story.find(:first, :conditions => { :title => story1.title }, :offset => 1).should == story2
-        end
-      end
-
-      describe 'find(:first, :conditions => [])' do
-        it 'works' do
-          story = Story.create!
-          Story.find(:first, :conditions => []).should == story
-        end
-      end
-    end
-
-    describe '#find_by_attr' do
-      it 'handles nils' do
-        Story.find_by_id(nil).should == nil
-      end
-
-      it 'handles non-existent ids' do
-        Story.find_by_id(-1).should == nil
-      end
-    end
-
-    describe '#find_all_by_attr' do
-      it "does not blow up when called with bad ids" do
-        lambda { Story.find_all_by_id([-1, -2, -3]) }.should_not raise_error
-      end
-    end
-
     describe 'Cache Usage' do
       describe 'when the cache is populated' do
         describe '#find' do
@@ -207,7 +48,7 @@ module Cache
               end
             end
 
-            describe 'find(:first, :join => ...) or find(..., :include => ...)'
+            describe 'find(:first, :join => ...) or find(..., :include => ...)' do
               it "uses the database, not the cache" do
                 story = Story.create!
                 mock(Story).fetch_cache.never
@@ -250,9 +91,8 @@ module Cache
                   end
                 end
 
-                describe 'when the attribtues have non-integers' do
+                describe 'when the attributes are non-integers' do
                   it 'uses the database, not the cache' do
-                    pending "the regexp is too limited too handle this case"
                     story = Story.create(:title => "title")
                     mock(Story.connection).execute.never
                     Story.find(:first, :conditions => "`stories`.title = '#{story.title }'") \
@@ -414,81 +254,58 @@ module Cache
             end
           end
         end
-      end
+        
+        describe 'calculations' do
+          before do
+            @stories = [Story.create!(:title => @title = 'asdf'), Story.create!(:title => @title)]
+          end
 
-      describe 'when the cache is partially populated' do
-        describe '#find' do
-          it "works" do
-            story1 = Story.create!(:title => title = 'once upon a time...')
-            Story.cache_repository.flush_all
-            story2 = Story.create!(:title => title)
-            Story.find(:all, :conditions => { :title => story1.title }).should == [story1, story2]
+          describe '#count(:all, :conditions => ...)' do
+            it "does not use the database" do
+              mock(Story.connection).execute.never
+              Story.count(:all, :conditions => { :title => @title }).should == @stories.size
+            end
+          end
+
+          describe '#count(:column, :conditions => ...)' do
+            it "uses the database, not the cache" do
+              mock(Story).fetch_cache.never
+              Story.count(:title, :conditions => { :title => @title }).should == @stories.size
+            end
+          end
+
+          describe '#count(:all, :distinct => ..., :select => ...)' do
+            it 'uses the database, not the cache' do
+              mock(Story).fetch_cache.never
+              Story.count(:all, :distinct => true, :select => :title, :conditions => { :title => @title }).should == @stories.collect(&:title).uniq.size
+            end
+          end
+
+          describe 'association proxies' do
+            describe '#count(:all, :conditions => ...)' do
+              it 'does not use the database' do
+                story = Story.create!
+                characters = [story.characters.create!(:name => name = 'name'), story.characters.create!(:name => name)]
+                mock(Story.connection).execute.never
+                story.characters.count(:all, :conditions => {:name => name}).should == characters.size
+              end
+            end
+          end
+        end
+
+        describe "Single Table Inheritence" do
+          describe '#find(:all, ...)' do
+            it "does not use the database" do
+              story, epic, oral = Story.create!(:title => title = 'foo'), Epic.create!(:title => title), Oral.create!(:title => title)
+              mock(Story.connection).execute.never
+
+              Story.find(:all, :conditions => { :title => title }).should == [story, epic, oral]
+              Epic.find(:all, :conditions => { :title => title }).should == [epic, oral]
+              Oral.find(:all, :conditions => { :title => title }).should == [oral]
+            end
           end
         end
       end
     end
-
-    describe 'calculations' do
-      before do
-        @stories = [Story.create!(:title => @title = 'asdf'), Story.create!(:title => @title)]
-      end
-      
-      describe '#count(:all, :conditions => ...)' do
-        it "does not use the database" do
-          mock(Story.connection).execute.never
-          Story.count(:all, :conditions => { :title => @title }).should == @stories.size
-        end
-      end
-      
-      describe '#count(:column, :conditions => ...)' do
-        it "uses the database, not the cache" do
-          mock(Story).fetch_cache.never
-          Story.count(:title, :conditions => { :title => @title }).should == @stories.size
-        end
-      end
-
-      describe '#count(:all, :distinct => ..., :select => ...)' do
-        it 'uses the database, not the cache' do
-          mock(Story).fetch_cache.never
-          Story.count(:all, :distinct => true, :select => :title, :conditions => { :title => @title }).should == @stories.collect(&:title).uniq.size
-        end
-      end
-      
-      describe 'association proxies' do
-        it '#count(:all, :conditions => ...)' do
-          story = Story.create!
-          characters = [story.characters.create!(:name => name = 'name'), story.characters.create!(:name => name)]
-          mock(Story.connection).execute.never
-          story.characters.count(:all, :conditions => {:name => name}).should == characters.size
-        end
-      end
-    end
-
-  # context "STI" do
-  #   it "should be supported by finders" do
-  #     story = Story.create!(:title => title = 'foo')
-  #     feature = Feature.create!(:title => title)
-  #     detail = Detail.create!(:title => title)
-  #     Story.expects(:fetch_cache).once.with("title:#{title}").returns([story.id, feature.id, detail.id])
-  #     stories = [story, feature, detail]
-  #     Story.expects(:fetch_cache).once.with(keys = stories.collect { |s| "id:#{s.id}" }).returns(Hash[*keys.zip(stories).flatten])
-  #     Story.find(:all, :conditions => { :title => title }).should == [story, feature, detail]
-  #     Story.expects(:fetch_cache).never
-  #     Feature.find(:all, :conditions => { :title => title }).should == [feature, detail]
-  #     Detail.find(:all, :conditions => { :title => title }).should == [detail]
-  #   end
-  #
-  #   it "on write through should not pollute the base-class cache" do
-  #     story = Story.create!(:title => title = 'foo')
-  #     feature = Feature.create!(:title => title)
-  #     Story.cache_repository.flush_all
-  #     detail = Detail.create!(:title => title)
-  #     Story.find(:all, :conditions => { :title => title }).should == [story, feature, detail]
-  #   end
-  #
-  #   it "should support find(id) for non-base-classes" do
-  #     feature = Feature.create!(:title => 'title')
-  #     Feature.find(feature.id).should == feature
-  #   end
-  # end
+  end
 end

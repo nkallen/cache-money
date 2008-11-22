@@ -16,7 +16,7 @@ require 'cache/util/array'
 class ActiveRecord::Base
   class << self
     def index(options = {})
-      include Cache::Coordinator
+      include Cache::Coordinator unless ancestors.include?(Cache::Coordinator)
       self.cache_config = options
     end
   end

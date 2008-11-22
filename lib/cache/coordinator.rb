@@ -73,7 +73,7 @@ module Cache
         end
 
         def cache_key(postfix)
-          "#{base_class.name}/#{postfix.gsub(' ', '+')}"
+          "#{name}/#{postfix.gsub(' ', '+')}"
         end
       end
       include Accessors
