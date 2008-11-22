@@ -10,7 +10,6 @@ module Cache
       def self.extended(active_record_class)
         active_record_class.class_eval do
           class << self
-            alias_method_chain :find_initial, :cache
             alias_method_chain :find_every, :cache
             alias_method_chain :find_from_ids, :cache
             alias_method_chain :calculate, :cache
@@ -18,41 +17,29 @@ module Cache
         end
       end
 
-      # User.find(:first, ...), User.find_by_foo(...)
-      def find_initial_with_cache(options)
-        query = Query.new(self, options, scope(:find))
-        if query.cacheable?
-          find_with_cache(query.cache_key, options.merge(:limit => 1)) do
-            find_every_without_cache(:conditions => options[:conditions])
-          end.first
-        else
-          find_initial_without_cache(options)
-        end
-      end
-
-      # User.find(:all, ...), User.find_all_by_foo(...)
+      # User.find(:first, ...), User.find_by_foo(...), User.find(:all, ...), User.find_all_by_foo(...)
       def find_every_with_cache(options)
-        query = Query.new(self, options, scope(:find))
-        if query.cacheable?
-          find_with_cache(query.cache_key, options) do
-            find_every_without_cache(:conditions => options[:conditions])
-          end
-        else
+        Query.new(self, options, scope(:find)).miss do
           find_every_without_cache(options)
-        end
+        end.uncacheable do
+          find_every_without_cache(options)
+        end.perform
       end
 
       # User.find(1), User.find(1, 2, 3), User.find([1, 2, 3]), User.find([])
       def find_from_ids_with_cache(ids, options)
         expects_array = ids.first.kind_of?(Array)
         sanitized_ids = ids.flatten.compact.uniq.map { |x| x.to_i }
-
+      
         cache_keys = sanitized_ids.collect do |id|
-          Query.new(self, options, :conditions => {:id => id}).cache_key
+          query = Query.new(self, options, :conditions => {:id => id})
+          if query.cacheable?
+            query.cache_key
+          end
         end.compact
         if !cache_keys.empty?
           objects = find_with_cache(cache_keys, options, &method(:find_from_keys))
-
+      
           case objects.size
           when 0
             raise ActiveRecord::RecordNotFound
@@ -68,12 +55,7 @@ module Cache
 
       # User.count(:all), User.count, User.sum(...)
       def calculate_with_cache(operation, column_name, options = {})
-        query = Query.new(self, options, scope(:find))
-        if column_name == :all && query.cacheable?
-          get("#{query.cache_key}/#{operation}", :raw => true) do
-            calculate_without_cache(operation, column_name, options)
-          end.to_i
-        else
+        Calculation.new(self, operation, column_name, options, scope(:find)).perform do
           calculate_without_cache(operation, column_name, options)
         end
       end

@@ -244,7 +244,7 @@ module Cache
             end
 
             describe 'find_by_title(title)' do
-              it "should use the cache with find_by" do
+              it "does not use the database" do
                 story1 = Story.create!(:title => 'title1')
                 story2 = Story.create!(:title => 'title2')
                 mock(Story.connection).execute.never

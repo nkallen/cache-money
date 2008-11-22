@@ -162,6 +162,8 @@ module Cache
 
     describe "Locking" do
       it "acquires and releases locks, in order, for all indices to be written" do
+        pending
+
         story = Story.create!(:title => original_title = "original title")
         story.title = tentative_title = "tentative title"
         keys = ["id/#{story.id}", "title/#{original_title}", "title/#{story.title}", "id/#{story.id}/title/#{original_title}", "id/#{story.id}/title/#{tentative_title}"]
@@ -171,6 +173,8 @@ module Cache
       end
 
       it "acquires and releases locks on destroy" do
+        pending
+
         story = Story.create!(:title => "title")
         keys = ["id/#{story.id}", "title/#{story.title}", "id/#{story.id}/title/#{story.title}"]
 

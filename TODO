@@ -14,9 +14,4 @@
 * Release test helper (timings etc.)
 
 * Handle append strategy using add rather than set to avoid race condition
-* move to :
-
-class Foo
-  index :bar
-  index []
-end
+* find_initial_with_cache doesn't seem to be necessary anymore, huh?
