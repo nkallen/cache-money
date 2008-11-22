@@ -20,8 +20,9 @@ module Cache
 
       # User.find(:first, ...), User.find_by_foo(...)
       def find_initial_with_cache(options)
-        if cache_key = safe_for_write_through_cache?(options)
-          find_with_cache(cache_key, options.merge(:limit => 1)) do
+        query = Query.new(self, options, scope(:find))
+        if query.cacheable?
+          find_with_cache(query.cache_key, options.merge(:limit => 1)) do
             find_every_without_cache(:conditions => options[:conditions])
           end.first
         else
@@ -31,8 +32,9 @@ module Cache
 
       # User.find(:all, ...), User.find_all_by_foo(...)
       def find_every_with_cache(options)
-        if cache_key = safe_for_write_through_cache?(options)
-          find_with_cache(cache_key, options) do
+        query = Query.new(self, options, scope(:find))
+        if query.cacheable?
+          find_with_cache(query.cache_key, options) do
             find_every_without_cache(:conditions => options[:conditions])
           end
         else
@@ -46,7 +48,7 @@ module Cache
         sanitized_ids = ids.flatten.compact.uniq.map { |x| x.to_i }
 
         cache_keys = sanitized_ids.collect do |id|
-          safe_for_write_through_cache?(options, :conditions => {:id => id})
+          Query.new(self, options, :conditions => {:id => id}).cache_key
         end.compact
         if !cache_keys.empty?
           objects = find_with_cache(cache_keys, options, &method(:find_from_keys))
@@ -66,73 +68,17 @@ module Cache
 
       # User.count(:all), User.count, User.sum(...)
       def calculate_with_cache(operation, column_name, options = {})
-        if column_name == :all && cache_key = safe_for_write_through_cache?(options)
-          get("#{cache_key}/#{operation}", :raw => true) { calculate_without_cache(operation, column_name, options) }.to_i
+        query = Query.new(self, options, scope(:find))
+        if column_name == :all && query.cacheable?
+          get("#{query.cache_key}/#{operation}", :raw => true) do
+            calculate_without_cache(operation, column_name, options)
+          end.to_i
         else
           calculate_without_cache(operation, column_name, options)
         end
       end
 
       private
-      def safe_for_write_through_cache?(options1, options2 = scope(:find) || {})
-        if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
-          return nil unless partial_index_1 = attribute_value_pairs_for_conditions(options1[:conditions])
-          return nil unless partial_index_2 = attribute_value_pairs_for_conditions(options2[:conditions])
-          index = (partial_index_1 + partial_index_2).sort { |x, y| x[0] <=> y[0] }
-          if indexed_on?(index.collect { |pair| pair[0] })
-            cache_key_for_index(index)
-          end
-        end
-      end
-
-      def safe_options_for_cache?(options)
-        return false unless options.kind_of?(Hash)
-        options.except(:conditions, :readonly, :limit, :offset).values.compact.empty? && !options[:readonly]
-      end
-
-      def attribute_value_pairs_for_conditions(conditions)
-        case conditions
-        when Hash
-          conditions.to_a.collect { |key, value| [key.to_s, value] }
-        when String
-          parse_indices_from_condition(conditions)
-        when Array
-          parse_indices_from_condition(*conditions)
-        when NilClass
-          []
-        end
-      end
-
-      # Matches: id = 1 AND name = 'foo'
-      AND = /\s+AND\s+/i
-      # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123; id = 123, id = ?, id = '123', id = '12''3'; (id = 123)
-      KEY_EQ_VALUE = /^\(?(?:`?(\w+)`?\.)?`?(\w+)`? = '?(\d+|\?|(?:(?:[^']|'')*))'?\)?$/
-      
-      def parse_indices_from_condition(conditions = '', *values)
-        values = values.dup
-        conditions.split(AND).inject([]) do |indices, condition|
-          matched, table_name, column_name, sql_value = *(KEY_EQ_VALUE.match(condition))
-          if matched && table_name_is_name_of_current_active_record_class?(table_name)
-            value = sql_value == '?' ? values.shift : sql_value
-            indices << [column_name, value]
-          else
-            return nil
-          end
-        end
-      end
-
-      def table_name_is_name_of_current_active_record_class?(table_name)
-        !table_name || (table_name == self.table_name)
-      end
-
-      def indexed_on?(attributes)
-        indices.include?(attributes)
-      end
-
-      def cache_key_for_index(attributes)
-        attributes.flatten.join('/')
-      end
-
       def find_with_cache(cache_keys, options)
         missed_keys = nil
         objects = get(cache_keys) { |*missed_keys| yield(missed_keys) }

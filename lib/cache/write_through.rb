@@ -84,6 +84,11 @@ module Cache
       end
 
       private
+      
+      def cache_key_for_index(attribute_value_pairs)
+        attribute_value_pairs.flatten.join('/')
+      end
+      
       def old_and_new_attribute_value_pairs(attributes_in_the_index, object)
         old_attribute_value_pairs = []
         new_attribute_value_pairs = []
