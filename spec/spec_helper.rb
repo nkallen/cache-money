@@ -24,15 +24,29 @@ Spec::Runner.configure do |config|
   end
   
   config.before :suite do
-    Story = Class.new(ActiveRecord::Base)
+    ActiveRecord::Base.class_eval do
+      is_cached :repository => Cache::Transactional.new($memcache, $lock)
+    end
+    
     Character = Class.new(ActiveRecord::Base)
+    Story = Class.new(ActiveRecord::Base)
     Story.has_many :characters
-    Story.index :on => [:id, :title, [:id, :title]], :repository => repository = Cache::Transactional.new($memcache, $lock)
-    Character.index :on => [:id, [:name, :story_id], [:id, :story_id]], :repository => repository
+    
+    Story.class_eval do
+      index :title
+      index [:id, :title]
+    end
 
     Epic = Class.new(Story)
     Oral = Class.new(Epic)
-    Oral.index :on => [:id, :title], :repository => repository
-    Story.has_many :characters
+    
+    Character.class_eval do
+      index [:name, :story_id]
+      index [:id, :story_id]
+    end
+    
+    Oral.class_eval do
+      index :subtitle
+    end
   end
 end

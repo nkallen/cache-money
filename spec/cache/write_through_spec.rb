@@ -199,10 +199,10 @@ module Cache
       
         describe 'when one ancestor has its own indices' do
           it "it only populates those indices for that ancestor" do
-            oral = Oral.create!(:title => 'title')
-            Story.get("id/#{oral.id}/title/#{oral.title}").should == [oral.id]
-            Epic.get("id/#{oral.id}/title/#{oral.title}").should == [oral.id]
-            Oral.get("id/#{oral.id}/title/#{oral.title}").should be_nil
+            oral = Oral.create!(:subtitle => 'subtitle')
+            Story.get("subtitle/#{oral.subtitle}").should be_nil
+            Epic.get("subtitle/#{oral.subtitle}").should be_nil
+            Oral.get("subtitle/#{oral.subtitle}").should == [oral.id]
           end
         end
       end

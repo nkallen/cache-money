@@ -9,17 +9,16 @@ require 'cache/transactional'
 require 'cache/write_through'
 require 'cache/finders'
 require 'cache/buffered'
+require 'cache/index_spec'
 require 'cache/config'
 require 'cache/accessor'
 
 require 'cache/util/array'
 
 class ActiveRecord::Base
-  class << self
-    def index(options = {})
-      include Cache unless ancestors.include?(Cache)
-      self.cache_config = options
-    end
+  def self.is_cached(options = {})
+    include Cache
+    self.cache_config = options
   end
 end
 
@@ -33,6 +32,6 @@ module Cache
   end
   
   def transaction_with_cache_transaction(&block)
-    cache_repository.transaction { transaction_without_cache_transaction(&block) }
+    repository.transaction { transaction_without_cache_transaction(&block) }
   end
 end

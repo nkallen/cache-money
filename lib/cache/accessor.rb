@@ -11,37 +11,37 @@ module Cache
         case keys
         when Array
           keys.collect! { |key| cache_key(key) }
-          hits = cache_repository.get_multi(keys)
+          hits = repository.get_multi(keys)
           if (missed_keys = keys - hits.keys).any?
             missed_values = block.call(*missed_keys)
             hits.merge!(Hash[*missed_keys.zip(Array(missed_values)).flatten])
           end
           hits
         else
-          cache_repository.get(cache_key(keys), options[:raw]) || (block ? block.call : nil)
+          repository.get(cache_key(keys), options[:raw]) || (block ? block.call : nil)
         end
       end
 
       def set(key, value, ttl)
-        cache_repository.set(cache_key(key), value, ttl)
+        repository.set(cache_key(key), value, ttl)
       end
     
       def incr(key, delta = 1)
-        cache_repository.incr(cache_key(key), delta) || begin
-          cache_repository.set(cache_key(key), 0)
-          cache_repository.incr(cache_key(key), x = yield)
+        repository.incr(cache_key(key), delta) || begin
+          repository.set(cache_key(key), 0)
+          repository.incr(cache_key(key), x = yield)
         end
       end
 
       def decr(key, delta = 1)
-        cache_repository.decr(cache_key(key), delta) || begin
-          cache_repository.set(cache_key(key), 0)
-          cache_repository.incr(cache_key(key), yield)
+        repository.decr(cache_key(key), delta) || begin
+          repository.set(cache_key(key), 0)
+          repository.incr(cache_key(key), yield)
         end
       end
 
       def expire(key)
-        cache_repository.delete(cache_key(key))
+        repository.delete(cache_key(key))
       end
 
       def cache_key(postfix)
