@@ -35,6 +35,14 @@ module Cache
           end
         end
       end
+      
+      def limit
+        @limit ||= @options1[:limit] || @options2[:limit]
+      end
+      
+      def offset
+        @limit ||= @options1[:offset] || @options2[:offset] || 0
+      end
 
       private
       def cacheable?(options1, options2)

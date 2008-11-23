@@ -44,13 +44,18 @@ module Cache
     def order
       @order ||= options[:order] || :asc
     end
+    
+    def limit
+      options[:limit]
+    end
 
     def serialize_object(object)
       primary_key? ? object : object.id
     end
     
     def matches?(query)
-      query.order == ['id', order]
+      query.order == ['id', order] &&
+      (!limit || (query.limit && query.limit + query.offset <= limit))
     end
 
     private
