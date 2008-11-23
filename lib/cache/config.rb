@@ -1,5 +1,31 @@
 module Cache
   module Config
+    class Config
+      attr_reader :active_record, :options
+      
+      def initialize(active_record, options = {})
+        @active_record = active_record
+        @options = options
+      end
+      
+      def repository
+        @options[:repository]
+      end
+      
+      def indices
+        @options[:indices] ||= []
+      end
+      
+      def options
+        @options.dup.merge(:indices => @options[:indices].dup)
+      end
+      
+      def dup(active_record)
+        active_record.cache_config = Config.new(active_record, options.except(:indices))
+        indices.each { |i| active_record.index i.attributes, i.options }
+      end
+    end
+    
     def self.included(a_module)
       a_module.module_eval do
         extend ClassMethods
@@ -8,40 +34,26 @@ module Cache
     end
     
     module ClassMethods
-      DEFAULT_OPTIONS = {
-        :indices => [Cache::IndexSpec.new(:id)],
-        :ttl => 1.day
-      }
+      def self.extended(a_class)
+        a_class.class_eval do
+          class << self
+            delegate :repository, :indices, :to => :@cache_config
+            alias_method_chain :inherited, :cache_config
+          end
+        end
+      end
+      
+      def inherited_with_cache_config(subclass)
+        inherited_without_cache_config(subclass)
+        @cache_config.dup(subclass)
+      end
       
       def index(attributes, options = {})
-        cache_config.indices << Cache::IndexSpec.new(attributes, options)
+        @cache_config.indices << Cache::IndexSpec.new(@cache_config, self, attributes, options)
       end
       
-      def repository
-        cache_config.repository
-      end
-
-      def indices
-        cache_config.indices
-      end
-      
-      private
-      def cache_config=(options)
-        write_inheritable_attribute :cache_config, Config.new(DEFAULT_OPTIONS.merge(options))
-      end
-      
-      class Config
-        attr_reader :ttl, :indices, :repository
-        
-        def initialize(options = {})
-          @indices = options[:indices]
-          @ttl = options[:ttl]
-          @repository = options[:repository]
-        end
-        
-        def dup
-          Config.new(:indices => @indices.dup, :ttl => @ttl, :repository => @repository)
-        end
+      def cache_config=(config)
+        @cache_config = config
       end
     end
   end

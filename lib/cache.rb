@@ -23,7 +23,8 @@ require 'cache/util/array'
 class ActiveRecord::Base
   def self.is_cached(options = {})
     include Cache
-    self.cache_config = options
+    self.cache_config = Cache::Config::Config.new(self, options)
+    index :id
   end
 end
 
@@ -31,7 +32,6 @@ module Cache
   def self.included(active_record_class)
     active_record_class.class_eval do
       include Config, Accessor, WriteThrough, Finders
-      class_inheritable_reader :cache_config
       alias_method_chain :transaction, :cache_transaction
     end
   end

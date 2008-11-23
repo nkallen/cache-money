@@ -48,11 +48,7 @@ module Cache
     
     module ClassMethods
       def add_to_cache(object)
-        clone = object.shallow_clone
-        indices.each do |attributes_in_the_index|
-          _, new_attribute_value_pairs = old_and_new_attribute_value_pairs(attributes_in_the_index, object)
-          add_to_index_with_minimal_network_operations(new_attribute_value_pairs, clone)
-        end
+        indices.each { |index| index.add(object) }
       end
 
       def update_cache(object)
