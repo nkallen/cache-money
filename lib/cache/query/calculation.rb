@@ -9,6 +9,10 @@ module Cache
       def perform(&block)
         super({}, { :raw => true }, block, block)
       end
+      
+      def calculation?
+        true
+      end
 
       protected
       def format_results(_, objects)

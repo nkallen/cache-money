@@ -12,7 +12,6 @@ module Cache
           attribute_value_pairs, index = cache_config
           cache_keys = cache_keys(attribute_value_pairs)
           misses, missed_keys = nil, nil
-          
           objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |missed_keys|
             misses = miss.call(missed_keys, @options1.merge(:limit => index.window))
             serialize_objects(index, misses)
@@ -43,13 +42,16 @@ module Cache
       def offset
         @offset ||= @options1[:offset] || @options2[:offset] || 0
       end
+      
+      def calculation?
+        false
+      end
 
       private
       def cacheable?(*optionss)
         optionss.each { |options| return unless safe_options_for_cache?(options) }
         partial_indices = optionss.collect { |options| attribute_value_pairs_for_conditions(options[:conditions]) }
         return if partial_indices.include?(nil)
-
         attribute_value_pairs = partial_indices.sum.sort { |x, y| x[0] <=> y[0] }
         if index = indexed_on?(attribute_value_pairs.collect { |pair| pair[0] })
           if index.matches?(self)

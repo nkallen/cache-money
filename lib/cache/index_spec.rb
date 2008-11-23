@@ -2,7 +2,7 @@ module Cache
   class IndexSpec
     attr_reader :attributes, :options
     delegate :each, :hash, :to => :@attributes
-    delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :incr, :decr, :to => :@active_record
+    delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :calculate_with_cache, :incr, :decr, :to => :@active_record
 
     DEFAULT_OPTIONS = { :ttl => 1.day }
 
@@ -34,7 +34,7 @@ module Cache
 
     def remove(object)
       old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
-      remove_object_from_cache(old_attribute_value_pairs, object)
+      remove_from_index_with_minimal_network_operations(old_attribute_value_pairs, object)
     end
 
     def ttl
@@ -62,8 +62,9 @@ module Cache
     end
     
     def matches?(query)
-      query.order == ['id', order] &&
-      (!limit || (query.limit && query.limit + query.offset <= limit))
+      query.calculation? ||
+      (query.order == ['id', order] &&
+      (!limit || (query.limit && query.limit + query.offset <= limit)))
     end
 
     private
@@ -151,17 +152,43 @@ module Cache
       end
     end
 
+    def index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
+      old_attribute_value_pairs != new_attribute_value_pairs
+    end
+    
+    def remove_from_index_with_minimal_network_operations(attribute_value_pairs, object)
+      if primary_key?
+        remove_object_from_primary_key_cache(attribute_value_pairs, object)
+      else
+        remove_object_from_cache(attribute_value_pairs, object)
+      end
+    end
+
+    def remove_object_from_primary_key_cache(attribute_value_pairs, object)
+      set(cache_key(attribute_value_pairs), [], :ttl => ttl)
+    end
+    
     def remove_object_from_cache(attribute_value_pairs, object)
       return if invalid_cache_key?(attribute_value_pairs)
 
       key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
       object_to_remove = serialize_object(object)
-      set(key, (cache_value - [object_to_remove]), :ttl => ttl)
-      decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
+      objects = cache_value - [object_to_remove]
+      objects = refresh_if_necessary(attribute_value_pairs, objects)
+      set(key, objects, :ttl => ttl)
     end
-
-    def index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
-      old_attribute_value_pairs != new_attribute_value_pairs
+    
+    def refresh_if_necessary(attribute_value_pairs, objects)
+      conditions = Hash[*attribute_value_pairs.flatten]
+      key = cache_key(attribute_value_pairs)
+      count = decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
+      if limit && objects.size < limit && objects.size < count
+        find_every_without_cache(:select => :id, :conditions => conditions).collect do |object|
+          serialize_object(object)
+        end        
+      else
+        objects
+      end
     end
   end
 end

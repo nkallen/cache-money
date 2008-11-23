@@ -72,8 +72,8 @@ module Cache
     
     describe '#create!' do
       describe 'when the cache is populated' do
-        describe 'when you have > limit + buffer items' do
-          it 'truncates when you have more than limit + buffer' do
+        describe 'when the count is > limit + buffer items' do
+          it 'truncates when the count is more than limit + buffer' do
             fables, title = [], 'title'
             (LIMIT + BUFFER).times { fables << Fable.create!(:title => title) }
             Fable.get("title/#{title}").should == fables.collect(&:id)
@@ -82,7 +82,7 @@ module Cache
           end
         end
 
-        describe 'when you have < limit + buffer items' do
+        describe 'when the count is < limit + buffer items' do
           it 'appends to the list' do
             fables, title = [], 'title'
             (LIMIT + BUFFER - 1).times { fables << Fable.create!(:title => title) }
@@ -94,8 +94,8 @@ module Cache
       end
       
       describe 'when the cache is not populated' do
-        describe 'when you have > limit + buffer items' do
-          it 'truncates when you have more than limit + buffer' do
+        describe 'when the count is > limit + buffer items' do
+          it 'truncates when the count is more than limit + buffer' do
             fables, title = [], 'title'
             (LIMIT + BUFFER).times { fables << Fable.create!(:title => title) }
             $memcache.flush_all
@@ -104,7 +104,7 @@ module Cache
           end
         end
 
-        describe 'when you have < limit + buffer items' do
+        describe 'when the count is < limit + buffer items' do
           it 'appends to the list' do
             fables, title = [], 'title'
             (LIMIT + BUFFER - 1).times { fables << Fable.create!(:title => title) }
@@ -117,15 +117,36 @@ module Cache
     end
     
     describe '#destroy!' do
-      describe 'when you have <= limit of items' do
-        describe 'when the count is <= limit of items' do
+      describe 'when the cache is populated' do
+        describe 'when the index size is <= limit of items' do
+          describe 'when count of records in the database <= limit of items' do
+            it 'deletes from the list' do
+              fables, title = [], 'title'
+              LIMIT.times { fables << Fable.create!(:title => title) }
+              mock(Fable.connection).select.never
+              fables.shift.destroy
+              Fable.get("title/#{title}").should == fables.collect(&:id)
+            end
+          end
+          
+          describe 'when the count of records in the database <= limit of items' do
+            it 'refreshes the list' do
+              fables, title = [], 'title'
+              (LIMIT + BUFFER + 1).times { fables << Fable.create!(:title => title) }
+              (BUFFER + 1).times { fables.shift.destroy }
+              Fable.get("title/#{title}").should == fables.collect(&:id)              
+            end
+          end
         end
 
-        describe 'when the count > limit of items' do
+        describe 'when the count is > limit of items' do
+          it 'deletes from the list' do
+            fables, title = [], 'title'
+            LIMIT.times { fables << Fable.create!(:title => title) }
+            fables.pop.destroy
+            Fable.get("title/#{title}").should == fables.collect(&:id)
+          end
         end
-      end
-
-      describe 'when you have > limit of items' do
       end
     end
   end
