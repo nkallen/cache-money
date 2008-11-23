@@ -1,13 +1,15 @@
 module Cache
   module Query
     class Abstract
-      def initialize(klass, options1, options2)
-        @klass, @options1, @options2 = klass, options1, options2 || {}
+      delegate :get, :table_name, :indices, :find_from_ids_without_cache, :to => :@active_record
+      
+      def initialize(active_record, options1, options2)
+        @active_record, @options1, @options2 = active_record, options1, options2 || {}
       end
 
       def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
         if cacheable?(@options1, @options2.merge(find_options))
-          objects = @klass.get(cache_keys, get_options) { |*missed_keys| miss.call(missed_keys) }
+          objects = get(cache_keys, get_options) { |*missed_keys| miss.call(missed_keys) }
           normalize_objects(objects)
         else
           uncacheable.call
@@ -65,11 +67,11 @@ module Cache
       end
 
       def table_name_is_name_of_current_active_record_class?(table_name)
-        !table_name || (table_name == @klass.table_name)
+        !table_name || (table_name == table_name)
       end
 
       def indexed_on?(attributes)
-        @klass.indices.include?(attributes)
+        indices.include?(attributes)
       end
     
       def normalize_objects(objects)
@@ -80,7 +82,7 @@ module Cache
     
       def convert_to_array(cache_keys, object)
         if object.kind_of?(Hash)
-          cache_keys.collect { |key| object[@klass.cache_key(key)] }.flatten.compact
+          cache_keys.collect { |key| object[@active_record.cache_key(key)] }.flatten.compact
         else
           Array(object)
         end
@@ -95,14 +97,14 @@ module Cache
           objects
         else
           cache_keys = objects.collect { |id| "id/#{id}" }
-          objects = @klass.get(cache_keys, &method(:find_from_keys))
+          objects = get(cache_keys, &method(:find_from_keys))
           convert_to_array(cache_keys, objects)
         end
       end
     
       def find_from_keys(*missing_keys)
         missing_ids = missing_keys.flatten.collect { |key| key.split('/')[2].to_i }
-        @klass.send :find_from_ids_without_cache, missing_ids, {}
+        find_from_ids_without_cache(missing_ids, {})
       end
     end
   end
