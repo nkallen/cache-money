@@ -7,12 +7,12 @@ module Cache
         @ids = ids.flatten.compact.uniq.collect(&:to_i)
       end
 
-      def perform(&block)
+      def perform
         return [] if @ids.empty?
-        super({ :conditions => { :id => @ids.first } }, {}, method(:find_from_keys_with_options), block)
+        super(:conditions => { :id => @ids.first })
       end
 
-      private
+      protected
       def deserialize_objects(objects)
         convert_to_active_record_collection(super(objects))
       end
@@ -20,7 +20,17 @@ module Cache
       def cache_keys(attribute_value_pairs)
         @ids.collect { |id| "id/#{id}" }
       end
+      
+      
+      def miss(missing_keys, options)
+        find_from_keys(*missing_keys)
+      end
+      
+      def uncacheable
+        find_from_ids_without_cache(@ids, @options1)
+      end
 
+      private
       def convert_to_active_record_collection(objects)
         case objects.size
         when 0
@@ -30,10 +40,6 @@ module Cache
         else
           objects
         end
-      end
-      
-      def find_from_keys_with_options(missing_keys, options)
-        find_from_keys(*missing_keys)
       end
     end
   end

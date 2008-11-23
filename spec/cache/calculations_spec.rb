@@ -46,14 +46,10 @@ module Cache
           it "populates the count correctly" do
             Story.create!(:title => title = 'title')
             $memcache.flush_all
-            Story.create!(:title => title = 'title')
-            Story.count(:all, :conditions => { :title => title }).should == 2
+            Story.count(:all, :conditions => { :title => title }).should == 1
+            Story.fetch("title/#{title}/count").should =~ /1/
           end
         end
-      end
-
-      describe 'when objects are created and deleted' do
-
       end
     end
   end

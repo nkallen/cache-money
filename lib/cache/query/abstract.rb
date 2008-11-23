@@ -7,18 +7,18 @@ module Cache
         @active_record, @options1, @options2 = active_record, options1, options2 || {}
       end
 
-      def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
+      def perform(find_options = {}, get_options = {})
         if cache_config = cacheable?(@options1, @options2, find_options)
           attribute_value_pairs, index = cache_config
           cache_keys = cache_keys(attribute_value_pairs)
           misses, missed_keys = nil, nil
           objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |missed_keys|
-            misses = miss.call(missed_keys, @options1.merge(:limit => index.window))
+            misses = miss(missed_keys, @options1.merge(:limit => index.window))
             serialize_objects(index, misses)
           end
           format_results(cache_keys, missed_keys == cache_keys ? misses : objects)
         else
-          uncacheable.call
+          uncacheable
         end
       end
 

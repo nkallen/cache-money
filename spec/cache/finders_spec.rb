@@ -311,13 +311,6 @@ module Cache
             Story.fetch("id/#{@story.id}").should == [@story]
           end
         end
-        
-        describe '#count' do
-          it 'populates the cache' do
-            Story.count(:all, :conditions => { :title => @story.title })
-            Story.fetch("title/#{@story.title}/count").should =~ /1/
-          end
-        end
       end
     end
   end
