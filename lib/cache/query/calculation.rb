@@ -19,8 +19,8 @@ module Cache
         objects.to_s
       end
 
-      def cacheable?(options1, options2)
-        @column == :all && super(options1, options2)
+      def cacheable?(*optionss)
+        @column == :all && super(*optionss)
       end
 
       def cache_keys(attribute_value_pairs)

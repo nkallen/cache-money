@@ -13,8 +13,8 @@ module Cache
             end
           end
 
-          describe 'find(:first, ...)' do
-            describe 'find(:first, :conditions => { :id => ?})' do
+          describe '#find(:first, ...)' do
+            describe '#find(:first, :conditions => { :id => ?})' do
               it "does not use the database" do
                 story = Story.create!
                 mock(Story.connection).execute.never
@@ -22,7 +22,7 @@ module Cache
               end
             end
 
-            describe "find(:first, :conditions => 'id = ?')" do
+            describe "#find(:first, :conditions => 'id = ?')" do
               it "does not use the database" do
                 story = Story.create!
                 mock(Story.connection).execute.never
@@ -32,7 +32,7 @@ module Cache
               end
             end
 
-            describe 'find(:first, :readonly => false) and any other options other than conditions are nil' do
+            describe '#find(:first, :readonly => false) and any other options other than conditions are nil' do
               it "does not use the database" do
                 story = Story.create!
                 mock(Story.connection).execute.never
@@ -40,7 +40,7 @@ module Cache
               end
             end
 
-            describe 'find(:first, :readonly => true)' do
+            describe '#find(:first, :readonly => true)' do
               it "uses the database, not the cache" do
                 story = Story.create!
                 mock(Story).get.never
@@ -48,7 +48,7 @@ module Cache
               end
             end
 
-            describe 'find(:first, :join => ...) or find(..., :include => ...)' do
+            describe '#find(:first, :join => ...) or find(..., :include => ...)' do
               it "uses the database, not the cache" do
                 story = Story.create!
                 mock(Story).get.never
@@ -57,14 +57,14 @@ module Cache
               end
             end
 
-            describe 'find(:first)' do
+            describe '#find(:first)' do
               it 'uses the database, not the cache' do
                 mock(Story).get.never
                 Story.find(:first)
               end
             end
 
-            describe 'find(:first, :conditions => "...")' do
+            describe '#find(:first, :conditions => "...")' do
               describe 'on unindexed attributes' do
                 it 'uses the database, not the cache' do
                   story = Story.create!
@@ -93,7 +93,7 @@ module Cache
                 end
               end
 
-              describe 'find(:first, :conditions => [...])' do
+              describe '#find(:first, :conditions => [...])' do
                 describe 'with one indexed attributes' do
                   it 'does not use the database' do
                     story = Story.create!
@@ -112,7 +112,7 @@ module Cache
               end
             end
 
-            describe 'find(:first, :conditions => {...})' do
+            describe '#find(:first, :conditions => {...})' do
               it "does not use the database" do
                 story = Story.create!(:title => "Sam")
                 mock(Story.connection).execute.never
@@ -142,27 +142,38 @@ module Cache
             describe 'when the with_scope has conditions' do
               describe 'when the scope conditions is a string' do
                 it "uses the database, not the cache" do
-                  story = Story.create!
-                  mock(Story).get.never
-                  Story.send :with_scope, :find => { :conditions => 'type IS NULL'} do
-                    Story.find(:first, :conditions => { :id => story.id })
+                  story = Story.create!(:title => title = 'title')
+                  mock(Story.connection).execute.never
+                  Story.send :with_scope, :find => { :conditions => "title = '#{title}'"} do
+                    Story.find(:first, :conditions => { :id => story.id }).should == story
                   end
                 end
               end
 
               describe 'when the find conditions is a string' do
-                it "uses the database, not the cache" do
-                  story = Story.create!
-                  mock(Story).get.never
+                it "does not use the database" do
+                  story = Story.create!(:title => title = 'title')
+                  mock(Story.connection).execute.never
                   Story.send :with_scope, :find => { :conditions => { :id => story.id }} do
-                    Story.find(:first, :conditions => "type IS NULL")
+                    Story.find(:first, :conditions => "title = '#{title}'").should == story
                   end
                 end
+              end
+              
+              describe '#find(1, :conditions => ...)' do
+                it "does not use the database" do
+                  story = Story.create!
+                  character = Character.create!(:name => name = 'barbara', :story_id => story)
+                  mock(Character.connection).execute.never
+                  Character.send :with_scope, :find => { :conditions => { :story_id => story.id } } do
+                    Character.find(character.id, :conditions => { :name => name }).should == character
+                  end
+                end                
               end
             end
 
             describe 'has_many associations' do
-              describe 'find(1)' do
+              describe '#find(1)' do
                 it "does not use the database" do
                   story = Story.create!
                   character = story.characters.create!
@@ -171,7 +182,7 @@ module Cache
                 end
               end
 
-              describe 'find(1, 2, ...)' do
+              describe '#find(1, 2, ...)' do
                 it "does not use the database" do
                   story = Story.create!
                   character1 = story.characters.create!
@@ -181,7 +192,7 @@ module Cache
                 end
               end
 
-              describe 'find_by_attr' do
+              describe '#find_by_attr' do
                 it "does not use the database" do
                   story = Story.create!
                   character = story.characters.create!
@@ -194,14 +205,14 @@ module Cache
           end
         end
 
-        describe 'find(:all)' do
+        describe '#find(:all)' do
           it "uses the database, not the cache" do
             character = Character.create!
             mock(Character).get.never
             Character.find(:all).should == [character]
           end
 
-          describe 'find(:all, :conditions => {...})' do
+          describe '#find(:all, :conditions => {...})' do
             it 'does not use the database' do
               story1 = Story.create!(:title => title = "title")
               story2 = Story.create!(:title => title)
@@ -210,7 +221,7 @@ module Cache
             end
           end
 
-          describe 'find(:all, :limit => ..., :offset => ...)' do
+          describe '#find(:all, :limit => ..., :offset => ...)' do
             it "cached attributes should support limits and offsets" do
               character1 = Character.create!(:name => "Sam", :story_id => 1)
               character2 = Character.create!(:name => "Sam", :story_id => 1)
@@ -224,7 +235,7 @@ module Cache
           end
         end
 
-        describe 'find([1, 2, ...], :conditions => ...)' do
+        describe '#find([1, 2, ...], :conditions => ...)' do
           it "uses the database, not the cache" do
             story1 = Story.create!
             story2 = Story.create!
@@ -235,7 +246,7 @@ module Cache
 
         describe '#find_by_attr' do
           describe 'on indexed attributes' do
-            describe 'find_by_id(id)' do
+            describe '#find_by_id(id)' do
               it "does not use the database" do
                 story = Story.create!
                 mock(Story.connection).execute.never
@@ -243,7 +254,7 @@ module Cache
               end
             end
 
-            describe 'find_by_title(title)' do
+            describe '#find_by_title(title)' do
               it "does not use the database" do
                 story1 = Story.create!(:title => 'title1')
                 story2 = Story.create!(:title => 'title2')

@@ -33,7 +33,7 @@ module Cache
       end
       
       def find_from_keys_with_options(missing_keys, options)
-        find_from_keys(missing_keys)
+        find_from_keys(*missing_keys)
       end
     end
   end

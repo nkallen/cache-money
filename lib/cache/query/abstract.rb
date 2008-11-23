@@ -8,7 +8,7 @@ module Cache
       end
 
       def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
-        if cache_config = cacheable?(@options1, @options2.merge(find_options))
+        if cache_config = cacheable?(@options1, @options2, find_options)
           attribute_value_pairs, index = cache_config
           cache_keys = cache_keys(attribute_value_pairs)
           misses, missed_keys = nil, nil
@@ -45,15 +45,15 @@ module Cache
       end
 
       private
-      def cacheable?(options1, options2)
-        if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
-          return unless partial_index_1 = attribute_value_pairs_for_conditions(options1[:conditions])
-          return unless partial_index_2 = attribute_value_pairs_for_conditions(options2[:conditions])
-          attribute_value_pairs = (partial_index_1 + partial_index_2).sort { |x, y| x[0] <=> y[0] }
-          if index = indexed_on?(attribute_value_pairs.collect { |pair| pair[0] })
-            if index.matches?(self)
-              [attribute_value_pairs, index]
-            end
+      def cacheable?(*optionss)
+        optionss.each { |options| return unless safe_options_for_cache?(options) }
+        partial_indices = optionss.collect { |options| attribute_value_pairs_for_conditions(options[:conditions]) }
+        return if partial_indices.include?(nil)
+
+        attribute_value_pairs = partial_indices.sum.sort { |x, y| x[0] <=> y[0] }
+        if index = indexed_on?(attribute_value_pairs.collect { |pair| pair[0] })
+          if index.matches?(self)
+            [attribute_value_pairs, index]
           end
         end
       end
