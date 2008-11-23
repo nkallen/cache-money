@@ -19,15 +19,15 @@ module Cache
       end
 
       def add_to_cache
-        unfold { |klass| klass.add_to_cache(self) }
+        InstanceMethods.unfold(self.class) { |klass| klass.add_to_cache(self) }
       end
 
       def update_cache
-        unfold { |klass| klass.update_cache(self) }
+        InstanceMethods.unfold(self.class) { |klass| klass.update_cache(self) }
       end
 
       def remove_from_cache
-        unfold { |klass| klass.remove_from_cache(self) }
+        InstanceMethods.unfold(self.class) { |klass| klass.remove_from_cache(self) }
       end
 
       def shallow_clone
@@ -38,8 +38,7 @@ module Cache
       end
       
       private
-      def unfold
-        klass = self.class
+      def self.unfold(klass)
         while klass < ActiveRecord::Base && klass.ancestors.include?(WriteThrough)
           yield klass
           klass = klass.superclass
