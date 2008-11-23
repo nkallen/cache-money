@@ -40,6 +40,10 @@ module Cache
       @ttl ||= options[:ttl] || config.ttl
     end
 
+    def serialize_object(object)
+      primary_key? ? object : object.id
+    end
+
     private
     def old_and_new_attribute_value_pairs(object)
       old_attribute_value_pairs = []
@@ -54,19 +58,19 @@ module Cache
     end
 
     def add_to_index_with_minimal_network_operations(attribute_value_pairs, object)
-      if primary_key?(attribute_value_pairs)
+      if primary_key?
         add_object_to_primary_key_cache(attribute_value_pairs, object)
       else
         add_object_to_cache(attribute_value_pairs, object)
       end
     end
 
-    def primary_key?(attribute_value_pairs)
-      attribute_value_pairs.size == 1 && attribute_value_pairs.first.first.to_s == "id"
+    def primary_key?
+      @attributes.size == 1 && @attributes.first == "id"
     end
 
     def add_object_to_primary_key_cache(attribute_value_pairs, object)
-      set(cache_key(attribute_value_pairs), [object], ttl)
+      set(cache_key(attribute_value_pairs), [object], :ttl => ttl)
     end
 
     def cache_key(attribute_value_pairs)
@@ -78,8 +82,8 @@ module Cache
 
       key, cache_value, cache_hit = get_key_and_value_at_index(attribute_value_pairs)
       if !cache_hit || overwrite
-        object_to_add = serializable_object_formatted_for_index(attribute_value_pairs, object)
-        set(key, (cache_value + [object_to_add]).uniq, ttl)
+        object_to_add = serialize_object(object)
+        set(key, (cache_value + [object_to_add]).uniq, :ttl => ttl)
         incr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
       end
     end
@@ -95,14 +99,10 @@ module Cache
         cache_hit = false
         conditions = Hash[*attribute_value_pairs.flatten]
         find_every_without_cache(:select => 'id', :conditions => conditions).collect do |object|
-          serializable_object_formatted_for_index(attribute_value_pairs, object)
+          serialize_object(object)
         end
       end
       [key, cache_value, cache_hit]
-    end
-
-    def serializable_object_formatted_for_index(attribute_value_pairs, object)
-      primary_key?(attribute_value_pairs) ? object : object.id
     end
 
     def calculate_at_index(operation, attribute_value_pairs)
@@ -114,7 +114,7 @@ module Cache
       if index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
         remove_object_from_cache(old_attribute_value_pairs, object)
         add_object_to_cache(new_attribute_value_pairs, object)
-      elsif primary_key?(old_attribute_value_pairs)
+      elsif primary_key?
         add_object_to_primary_key_cache(new_attribute_value_pairs, object)
       else
         add_object_to_cache(new_attribute_value_pairs, object, false)
@@ -125,8 +125,8 @@ module Cache
       return if invalid_cache_key?(attribute_value_pairs)
 
       key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
-      object_to_remove = serializable_object_formatted_for_index(attribute_value_pairs, object)
-      set(key, (cache_value - [object_to_remove]).uniq, ttl)
+      object_to_remove = serialize_object(object)
+      set(key, (cache_value - [object_to_remove]).uniq, :ttl => ttl)
       decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
     end
 

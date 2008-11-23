@@ -266,6 +266,48 @@ module Cache
           end
         end
       end
+      
+      describe 'when the cache is not populated' do
+        before do
+          @story = Story.create!(:title => 'title')
+          $memcache.flush_all
+        end
+        
+        describe '#find(:first, ...)' do
+          it 'populates the cache' do
+            Story.find(:first, :conditions => {:title => @story.title})
+            Story.fetch("title/#{@story.title}").should == [@story.id]
+          end
+        end
+        
+        describe '#find_by_attr' do
+          it 'populates the cache' do
+            Story.find_by_title(@story.title)
+            Story.fetch("title/#{@story.title}").should == [@story.id]
+          end
+        end
+        
+        describe '#find(:all, :conditions => ...)' do
+          it 'populates the cache' do
+            Story.find(:all, :conditions => {:title => @story.title})
+            Story.fetch("title/#{@story.title}").should == [@story.id]
+          end
+        end
+        
+        describe '#find(1)' do
+          it 'populates the cache' do
+            Story.find(@story.id)
+            Story.fetch("id/#{@story.id}").should == [@story]
+          end
+        end
+        
+        describe '#count' do
+          it 'populates the cache' do
+            Story.count(:all, :conditions => {:title => @story.title})
+            Story.fetch("title/#{@story.title}/count").should =~ /1/
+          end
+        end
+      end
     end
   end
 end

@@ -22,39 +22,39 @@ module Cache
         end
       end
 
-      def get(keys, options = {:ttl => 1.day}, &block)
+      def get(keys, options = {}, &block)
         case keys
         when Array
           fetch(keys, options, &block)
         else
           fetch(keys, options) do
             if block_given?
-              add(keys, result = yield, options[:ttl])
+              add(keys, result = yield)
               result
             end
           end
         end
       end
 
-      def add(key, value, ttl)
-        repository.add(cache_key(key), value, ttl)
+      def add(key, value, options = {})
+        repository.add(cache_key(key), value, options[:ttl] || 0, options[:raw])
       end
 
-      def set(key, value, ttl = 0)
-        repository.set(cache_key(key), value, ttl)
+      def set(key, value, options = {})
+        repository.set(cache_key(key), value, options[:ttl] || 0, options[:raw])
       end
 
-      def incr(key, delta = 1)
+      def incr(key, delta = 1, ttl = 0)
         repository.incr(cache_key(key), delta) || begin
-          repository.set(cache_key(key), 0)
-          repository.incr(cache_key(key), x = yield)
+          repository.set(cache_key(key), (result = yield).to_s, ttl, true)
+          result
         end
       end
 
-      def decr(key, delta = 1)
+      def decr(key, delta = 1, ttl = 0)
         repository.decr(cache_key(key), delta) || begin
-          repository.set(cache_key(key), 0)
-          repository.incr(cache_key(key), yield)
+          repository.set(cache_key(key), (result = yield).to_s, ttl, true)
+          result
         end
       end
 

@@ -1,8 +1,11 @@
 * Implement read-through strategy using add
-* Reorganize transactional spec
-* Clarify terminology around cache/key/index, etc.
 * test on AR::Base
 * windowing
+* remove excessive attribute_value_pairs in index_spec
+* attribute value pairs ugly sideffect
+
+* Reorganize transactional spec
+* Clarify terminology around cache/key/index, etc.
 
 * rake brittspace
 * Incorporate local_cache

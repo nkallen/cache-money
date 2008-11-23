@@ -9,10 +9,11 @@ module Cache
 
       def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
         if index = cacheable?(@options1, @options2.merge(find_options))
+          misses = nil
           objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |*missed_keys|
-            miss.call(missed_keys)
+            serialize_objects(index, miss.call(missed_keys))
           end
-          normalize_objects(objects)
+          format_results(objects)
         else
           uncacheable.call
         end
@@ -77,10 +78,14 @@ module Cache
       end
       alias_method :index_for, :indexed_on?
 
-      def normalize_objects(objects)
+      def format_results(objects)
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)
+      end
+      
+      def serialize_objects(index, objects)
+        Array(objects).collect { |missed| index.serialize_object(missed) }
       end
 
       def convert_to_array(cache_keys, object)

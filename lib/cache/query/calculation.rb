@@ -11,8 +11,12 @@ module Cache
       end
 
       protected
-      def normalize_objects(objects)
+      def format_results(objects)
         objects.to_i
+      end
+      
+      def serialize_objects(index, objects)
+        objects.to_s
       end
 
       def cacheable?(options1, options2)
