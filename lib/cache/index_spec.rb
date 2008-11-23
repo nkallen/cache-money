@@ -48,6 +48,14 @@ module Cache
     def limit
       options[:limit]
     end
+    
+    def buffer
+      options[:buffer]
+    end
+    
+    def window
+      options[:limit] + options[:buffer]
+    end
 
     def serialize_object(object)
       primary_key? ? object : object.id

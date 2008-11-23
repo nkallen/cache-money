@@ -14,10 +14,10 @@ module Cache
           misses, missed_keys = nil, nil
           
           objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |*missed_keys|
-            misses = miss.call(missed_keys)
+            misses = miss.call(missed_keys, @options1.merge(:limit => index.window))
             serialize_objects(index, misses)
           end
-          missed_keys == cache_keys ? misses : format_results(cache_keys, objects)
+          format_results(cache_keys, missed_keys == cache_keys ? misses : objects)
         else
           uncacheable.call
         end
@@ -41,7 +41,7 @@ module Cache
       end
       
       def offset
-        @limit ||= @options1[:offset] || @options2[:offset] || 0
+        @offset ||= @options1[:offset] || @options2[:offset] || 0
       end
 
       private

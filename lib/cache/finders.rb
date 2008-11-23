@@ -19,8 +19,8 @@ module Cache
 
       # User.find(:first, ...), User.find_by_foo(...), User.find(:all, ...), User.find_all_by_foo(...)
       def find_every_with_cache(options)
-        Query::Select.new(self, options, scope(:find)).miss do
-          find_every_without_cache(options)
+        Query::Select.new(self, options, scope(:find)).miss do |_, miss_options|
+          find_every_without_cache(miss_options)
         end.uncacheable do
           find_every_without_cache(options)
         end.perform
