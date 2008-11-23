@@ -1,4 +1,3 @@
-* remove excessive attribute_value_pairs in index_spec
 * test on AR::Base
 * windowing
 * attribute value pairs ugly sideffect

@@ -11,11 +11,11 @@ module Cache
       end
 
       protected
-      def format_results(objects)
+      def format_results(_, objects)
         objects.to_i
       end
       
-      def serialize_objects(index, objects)
+      def serialize_objects(_, objects)
         objects.to_s
       end
 
@@ -23,8 +23,8 @@ module Cache
         @column == :all && super(options1, options2)
       end
 
-      def cache_keys
-        "#{super}/#{@operation}"
+      def cache_keys(attribute_value_pairs)
+        "#{super(attribute_value_pairs)}/#{@operation}"
       end
     end
   end

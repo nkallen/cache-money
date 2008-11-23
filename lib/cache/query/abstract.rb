@@ -8,13 +8,16 @@ module Cache
       end
 
       def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
-        if index = cacheable?(@options1, @options2.merge(find_options))
+        if cache_config = cacheable?(@options1, @options2.merge(find_options))
+          attribute_value_pairs, index = cache_config
+          cache_keys = cache_keys(attribute_value_pairs)
           misses, missed_keys = nil, nil
+          
           objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |*missed_keys|
             misses = miss.call(missed_keys)
             serialize_objects(index, misses)
           end
-          missed_keys == cache_keys ? misses : format_results(objects)
+          missed_keys == cache_keys ? misses : format_results(cache_keys, objects)
         else
           uncacheable.call
         end
@@ -25,13 +28,15 @@ module Cache
         if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
           return unless partial_index_1 = attribute_value_pairs_for_conditions(options1[:conditions])
           return unless partial_index_2 = attribute_value_pairs_for_conditions(options2[:conditions])
-          @attribute_value_pairs = (partial_index_1 + partial_index_2).sort { |x, y| x[0] <=> y[0] }
-          indexed_on?(@attribute_value_pairs.collect { |pair| pair[0] })
+          attribute_value_pairs = (partial_index_1 + partial_index_2).sort { |x, y| x[0] <=> y[0] }
+          if index = indexed_on?(attribute_value_pairs.collect { |pair| pair[0] })
+            [attribute_value_pairs, index]
+          end
         end
       end
 
-      def cache_keys
-        @attribute_value_pairs.flatten.join('/')
+      def cache_keys(attribute_value_pairs)
+        attribute_value_pairs.flatten.join('/')
       end
 
       def safe_options_for_cache?(options)
@@ -79,7 +84,7 @@ module Cache
       end
       alias_method :index_for, :indexed_on?
 
-      def format_results(objects)
+      def format_results(cache_keys, objects)
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)

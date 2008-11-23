@@ -17,7 +17,7 @@ module Cache
         convert_to_active_record_collection(super(objects))
       end
 
-      def cache_keys
+      def cache_keys(attribute_value_pairs)
         @ids.collect { |id| "id/#{id}" }
       end
 
