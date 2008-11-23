@@ -1,5 +1,4 @@
 * there's a bug with find(1, :conditions => ...) and with_scope
-* there's a bug with mismatched table names on matching index/columns
 * test on AR::Base
 * windowing
 * remove all "should" BS
