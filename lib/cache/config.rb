@@ -40,8 +40,7 @@ module Cache
       end
       
       def initialize(active_record, options = {})
-        @active_record = active_record
-        @options = options
+        @active_record, @options = active_record, options
       end
       
       def repository
