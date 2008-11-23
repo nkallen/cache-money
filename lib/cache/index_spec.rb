@@ -36,6 +36,10 @@ module Cache
       remove_object_from_cache(old_attribute_value_pairs, object)
     end
     
+    def ttl
+      @ttl ||= options[:ttl] || config.ttl
+    end
+    
     private
     def old_and_new_attribute_value_pairs(object)
       old_attribute_value_pairs = []
@@ -62,7 +66,7 @@ module Cache
     end
     
     def add_object_to_primary_key_cache(attribute_value_pairs, object)
-      set(cache_key(attribute_value_pairs), [object], options[:ttl])
+      set(cache_key(attribute_value_pairs), [object], ttl)
     end
     
     def cache_key(attribute_value_pairs)
@@ -75,7 +79,7 @@ module Cache
       key, cache_value, cache_hit = get_key_and_value_at_index(attribute_value_pairs)
       if !cache_hit || overwrite
         object_to_add = serializable_object_formatted_for_index(attribute_value_pairs, object)
-        set(key, (cache_value + [object_to_add]).uniq, options[:ttl])
+        set(key, (cache_value + [object_to_add]).uniq, ttl)
         incr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
       end
     end
@@ -122,7 +126,7 @@ module Cache
 
       key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
       object_to_remove = serializable_object_formatted_for_index(attribute_value_pairs, object)
-      set(key, (cache_value - [object_to_remove]).uniq, options[:ttl])
+      set(key, (cache_value - [object_to_remove]).uniq, ttl)
       decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
     end
 

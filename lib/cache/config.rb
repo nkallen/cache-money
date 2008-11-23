@@ -47,6 +47,10 @@ module Cache
         @options[:repository]
       end
       
+      def ttl
+        @options[:ttl]
+      end
+      
       def indices
         @options[:indices] ||= []
       end
