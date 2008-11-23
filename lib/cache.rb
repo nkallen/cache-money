@@ -23,8 +23,7 @@ require 'cache/util/array'
 class ActiveRecord::Base
   def self.is_cached(options = {})
     include Cache
-    self.cache_config = Cache::Config::Config.new(self, options)
-    index :id
+    Config.create(self, options)
   end
 end
 

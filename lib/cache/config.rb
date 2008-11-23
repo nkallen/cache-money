@@ -33,6 +33,11 @@ module Cache
     
     class Config
       attr_reader :active_record, :options
+
+      def self.create(active_record, options)
+        active_record.cache_config = new(active_record, options)
+        active_record.index :id
+      end
       
       def initialize(active_record, options = {})
         @active_record = active_record
@@ -52,7 +57,7 @@ module Cache
       end
       
       def dup(active_record)
-        active_record.cache_config = Config.new(active_record, options.except(:indices))
+        active_record.cache_config = self.class.new(active_record, options.except(:indices))
         indices.each { |i| active_record.index i.attributes, i.options }
       end
     end
