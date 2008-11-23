@@ -52,7 +52,7 @@ module Cache
         end
 
         describe '#find(object)' do
-          it "should coerce arguments to integers" do
+          it "coerces arguments to integers" do
             story = Story.create!
             Story.find(story.id.to_s).should == story
           end
@@ -171,7 +171,7 @@ module Cache
       end
 
       describe '#find(id1, id2, ...)' do
-        it "should handle finds with multiple ids correctly" do
+        it "handles finds with multiple ids correctly" do
           story1 = Story.create!
           story2 = Story.create!
           $memcache.flush_all

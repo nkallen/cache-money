@@ -140,7 +140,7 @@ module Cache
         end
 
         describe 'when the value is nil' do
-          it "should not delete through the cache on indexed attributes when the value is nil" do
+          it "does not delete through the cache on indexed attributes when the value is nil" do
             story = Story.create!(:title => nil)
             story.destroy
             Story.get("title/").should == nil
