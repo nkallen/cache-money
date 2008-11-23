@@ -1,7 +1,6 @@
-* Implement read-through strategy using add
+* remove excessive attribute_value_pairs in index_spec
 * test on AR::Base
 * windowing
-* remove excessive attribute_value_pairs in index_spec
 * attribute value pairs ugly sideffect
 
 * Reorganize transactional spec

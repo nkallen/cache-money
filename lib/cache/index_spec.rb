@@ -98,7 +98,7 @@ module Cache
       cache_value = get(key) do
         cache_hit = false
         conditions = Hash[*attribute_value_pairs.flatten]
-        find_every_without_cache(:select => 'id', :conditions => conditions).collect do |object|
+        find_every_without_cache(:select => :id, :conditions => conditions).collect do |object|
           serialize_object(object)
         end
       end
