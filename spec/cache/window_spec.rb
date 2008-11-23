@@ -17,14 +17,14 @@ module Cache
       
       describe 'when the cache is populated' do
         describe "#find(:all, :conditions => ...)" do
-          xit "uses the database, not the cache" do
+          it "uses the database, not the cache" do
             mock(Fable).get.never
             Fable.find(:all, :conditions => { :title => @title }).should == @fables
           end
         end
 
         describe "#find(:all, :conditions => ..., :limit => ...) and query limit > index limit" do
-          xit "uses the database, not the cache" do
+          it "uses the database, not the cache" do
             mock(Fable).get.never
             Fable.find(:all, :conditions => { :title => @title }, :limit => LIMIT + 1).should == @fables[0, LIMIT + 1]
           end
@@ -38,7 +38,7 @@ module Cache
         end
 
         describe "#find(:all, :conditions => ..., :limit => ...) and query limit <= index limit" do
-          xit "does not use the database" do
+          it "does not use the database" do
             mock(Fable.connection).execute.never
             Fable.find(:all, :conditions => { :title => @title }, :limit => LIMIT - 1).should == @fables[0, LIMIT - 1]
           end
@@ -52,7 +52,7 @@ module Cache
         
         describe "#find(:all, :conditions => ..., :limit => ...) and query limit <= index limit" do
           describe 'when there are fewer than limit + buffer items' do
-            xit "populates the cache with all items" do
+            it "populates the cache with all items" do
               Fable.find(:all, :limit => deleted = @fables.size - LIMIT - BUFFER + 1).collect(&:destroy)
               $memcache.flush_all
               Fable.find(:all, :conditions => { :title => @title }, :limit => LIMIT).should == @fables[deleted, LIMIT]
@@ -61,7 +61,7 @@ module Cache
           end
           
           describe 'when there are more than limit + buffer items' do
-            xit "populates the cache with limit + buffer items" do
+            it "populates the cache with limit + buffer items" do
               Fable.find(:all, :conditions => { :title => @title }, :limit => 5).should == @fables[0, 5]
               Fable.get("title/#{@title}").should == @fables[0, LIMIT + BUFFER].collect(&:id)
             end
@@ -71,7 +71,7 @@ module Cache
       
       describe '#create!' do
         describe 'when you have > limit + buffer items' do
-          xit 'truncates when you have more than limit + buffer' do
+          it 'truncates when you have more than limit + buffer' do
           end
         end
 
