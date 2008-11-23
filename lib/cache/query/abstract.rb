@@ -13,7 +13,7 @@ module Cache
           cache_keys = cache_keys(attribute_value_pairs)
           misses, missed_keys = nil, nil
           
-          objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |*missed_keys|
+          objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |missed_keys|
             misses = miss.call(missed_keys, @options1.merge(:limit => index.window))
             serialize_objects(index, misses)
           end
@@ -137,7 +137,7 @@ module Cache
       end
 
       def find_from_keys(*missing_keys)
-        missing_ids = missing_keys.flatten.collect { |key| key.split('/')[2].to_i }
+        missing_ids = Array(missing_keys).flatten.collect { |key| key.split('/')[2].to_i }
         find_from_ids_without_cache(missing_ids, {})
       end
     end

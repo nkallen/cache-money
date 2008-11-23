@@ -38,7 +38,7 @@ module Cache
           end
         end
 
-        describe "#find(:all, :conditions => ..., :limit => ...) and query limit < index limit" do
+        describe "#find(:all, :conditions => ..., :limit => ...) and query limit <= index limit" do
           it "does not use the database" do
             mock(Fable.connection).execute.never
             Fable.find(:all, :conditions => { :title => @title }, :limit => LIMIT - 1).should == @fables[0, LIMIT - 1]
@@ -51,11 +51,13 @@ module Cache
           $memcache.flush_all
         end
         
-        describe "#find(:all, :conditions => ..., :limit => <= index limit)" do
+        describe "#find(:all, :conditions => ..., :limit => ...) and query limit <= index limit" do
           describe 'when there are fewer than limit + buffer items' do
             it "populates the cache with all items" do
-              Fable.find(:all, :conditions => { :title => @title })
-              # Fable.get("title/@title").size.should == 
+              Fable.find(:all, :limit => deleted = @fables.size - LIMIT - BUFFER + 1).collect(&:destroy)
+              $memcache.flush_all
+              Fable.find(:all, :conditions => { :title => @title }, :limit => LIMIT).should == @fables[deleted, LIMIT]
+              Fable.get("title/#{@title}").should == @fables[deleted, @fables.size - deleted].collect(&:id)
             end
           end
           

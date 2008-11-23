@@ -43,6 +43,7 @@ Spec::Runner.configure do |config|
     Character.class_eval do
       index [:name, :story_id]
       index [:id, :story_id]
+      index [:id, :name, :story_id]
     end
 
     Oral.class_eval do

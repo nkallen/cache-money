@@ -13,7 +13,7 @@ module Cache
           keys = keys.collect { |key| cache_key(key) }
           hits = repository.get_multi(keys)
           if (missed_keys = keys - hits.keys).any?
-            missed_values = block.call(*missed_keys)
+            missed_values = block.call(missed_keys)
             hits.merge!(Hash[*missed_keys.zip(Array(missed_values)).flatten])
           end
           hits
@@ -29,7 +29,7 @@ module Cache
         else
           fetch(keys, options) do
             if block_given?
-              add(keys, result = yield)
+              add(keys, result = yield(keys))
               result
             end
           end

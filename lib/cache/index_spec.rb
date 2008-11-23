@@ -54,7 +54,7 @@ module Cache
     end
     
     def window
-      options[:limit] + options[:buffer]
+      options[:limit] && options[:limit] + options[:buffer]
     end
 
     def serialize_object(object)

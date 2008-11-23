@@ -1,7 +1,6 @@
 * there's a bug with find(1, :conditions => ...) and with_scope
 * test on AR::Base
 * windowing
-* index #ttl, order, limit private?
 
 * Reorganize transactional spec
 * Clarify terminology around cache/key/index, etc.

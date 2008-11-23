@@ -9,7 +9,7 @@ module Cache
 
       def perform(&block)
         return [] if @ids.empty?
-        super({ :conditions => { :id => @ids.first } }, {}, method(:find_from_keys), block)
+        super({ :conditions => { :id => @ids.first } }, {}, method(:find_from_keys_with_options), block)
       end
 
       private
@@ -30,6 +30,10 @@ module Cache
         else
           objects
         end
+      end
+      
+      def find_from_keys_with_options(missing_keys, options)
+        find_from_keys(missing_keys)
       end
     end
   end
