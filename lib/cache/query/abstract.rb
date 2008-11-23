@@ -1,30 +1,20 @@
 module Cache
-  class Query
-    extend ActiveSupport::Memoizable
-    
-    def initialize(klass, options1, options2)
-      @klass, @options1, @options2 = klass, options1, options2 || {}
-    end
-    
-    def miss(&block)
-      @miss = block; self
-    end
-    
-    def uncacheable(&block)
-      @uncacheable = block; self
-    end
-
-    def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
-      if cacheable?(@options1, @options2.merge(find_options))
-        objects = @klass.get(cache_keys, get_options) { |*missed_keys| miss.call(missed_keys) }
-        normalize_objects(objects)
-      else
-        uncacheable.call
+  module Query
+    class Abstract
+      def initialize(klass, options1, options2)
+        @klass, @options1, @options2 = klass, options1, options2 || {}
       end
-    end
+
+      def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
+        if cacheable?(@options1, @options2.merge(find_options))
+          objects = @klass.get(cache_keys, get_options) { |*missed_keys| miss.call(missed_keys) }
+          normalize_objects(objects)
+        else
+          uncacheable.call
+        end
+      end
     
-    protected
-    module Safety
+      private
       def cacheable?(options1, options2)
         if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
           return unless partial_index_1 = attribute_value_pairs_for_conditions(options1[:conditions])
@@ -33,11 +23,11 @@ module Cache
           indexed_on?(@attribute_value_pairs.collect { |pair| pair[0] })
         end
       end
-    
+
       def cache_keys
         @attribute_value_pairs.flatten.join('/')
       end
-    
+      
       def safe_options_for_cache?(options)
         return false unless options.kind_of?(Hash)
         options.except(:conditions, :readonly, :limit, :offset).values.compact.empty? && !options[:readonly]
@@ -60,7 +50,7 @@ module Cache
       AND = /\s+AND\s+/i
       # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123; id = 123, id = ?, id = '123', id = '12''3'; (id = 123)
       KEY_EQ_VALUE = /^\(?(?:`?(\w+)`?\.)?`?(\w+)`? = '?(\d+|\?|(?:(?:[^']|'')*))'?\)?$/
-    
+  
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup
         conditions.split(AND).inject([]) do |indices, condition|
@@ -81,16 +71,13 @@ module Cache
       def indexed_on?(attributes)
         @klass.indices.include?(attributes)
       end
-    end
-    include Safety
     
-    module Performance
       def normalize_objects(objects)
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)
       end
-      
+    
       def convert_to_array(cache_keys, object)
         if object.kind_of?(Hash)
           cache_keys.collect { |key| object[@klass.cache_key(key)] }.flatten.compact
@@ -112,70 +99,10 @@ module Cache
           convert_to_array(cache_keys, objects)
         end
       end
-      
+    
       def find_from_keys(*missing_keys)
         missing_ids = missing_keys.flatten.collect { |key| key.split('/')[2].to_i }
         @klass.send :find_from_ids_without_cache, missing_ids, {}
-      end
-    end
-    include Performance
-  end
-  
-  class Calculation < Query
-    def initialize(klass, operation, column, options1, options2)
-      super(klass, options1, options2)
-      @operation, @column = operation, column
-    end
-    
-    def perform(&block)
-      super({}, { :raw => true }, block, block)
-    end
-
-    protected
-    def normalize_objects(objects)
-      objects.to_i
-    end
-    
-    def cacheable?(options1, options2)
-      @column == :all && super(options1, options2)
-    end
-    
-    def cache_keys
-      "#{super}/#{@operation}"
-    end
-  end
-  
-  class PrimaryKeyQuery < Query
-    def initialize(klass, ids, options1, options2)
-      super(klass, options1, options2)
-      @expects_array = ids.first.kind_of?(Array)
-      @ids = ids.flatten.compact.uniq.collect(&:to_i)
-    end
-    
-    def perform
-      return [] if @ids.empty?
-      super({:conditions => { :id => @ids.first }}, {}, method(:find_from_keys), lambda {
-        @klass.send :find_from_ids_without_cache, @ids, @options1
-      })
-    end
-    
-    private
-    def normalize_objects(objects)
-      convert_to_active_record_collection(super(objects))
-    end
-    
-    def cache_keys
-      @ids.collect { |id| "id/#{id}" }
-    end
-    
-    def convert_to_active_record_collection(objects)
-      case objects.size
-      when 0
-        raise ActiveRecord::RecordNotFound
-      when 1
-        @expects_array ? objects : objects.first
-      else
-        objects
       end
     end
   end

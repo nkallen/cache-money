@@ -11,8 +11,12 @@ require 'cache/finders'
 require 'cache/buffered'
 require 'cache/index_spec'
 require 'cache/config'
-require 'cache/query'
 require 'cache/accessor'
+
+require 'cache/query/abstract'
+require 'cache/query/select'
+require 'cache/query/primary_key'
+require 'cache/query/calculation'
 
 require 'cache/util/array'
 
