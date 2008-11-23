@@ -1,7 +1,7 @@
 module Cache
   module Query
     class Abstract
-      delegate :get, :table_name, :indices, :find_from_ids_without_cache, :to => :@active_record
+      delegate :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :to => :@active_record
       
       def initialize(active_record, options1, options2)
         @active_record, @options1, @options2 = active_record, options1, options2 || {}
@@ -82,7 +82,7 @@ module Cache
     
       def convert_to_array(cache_keys, object)
         if object.kind_of?(Hash)
-          cache_keys.collect { |key| object[@active_record.cache_key(key)] }.flatten.compact
+          cache_keys.collect { |key| object[cache_key(key)] }.flatten.compact
         else
           Array(object)
         end
