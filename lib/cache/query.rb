@@ -14,15 +14,12 @@ module Cache
       @uncacheable = block; self
     end
 
-    def perform
-      if cacheable?(@options1, @options2)
-        cache_keys = cache_key
-        objects = @klass.get(cache_keys) { |*missed_keys| @miss.call(missed_keys) }
-        objects = convert_to_array(cache_keys, objects)
-        objects = apply_limits_and_offsets(objects, @options1)
-        deserialize_objects(objects)
+    def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
+      if cacheable?(@options1, @options2.merge(find_options))
+        objects = @klass.get(cache_keys, get_options) { |*missed_keys| miss.call(missed_keys) }
+        normalize_objects(objects)
       else
-        @uncacheable.call
+        uncacheable.call
       end
     end
     
@@ -37,7 +34,7 @@ module Cache
         end
       end
     
-      def cache_key
+      def cache_keys
         @attribute_value_pairs.flatten.join('/')
       end
     
@@ -88,6 +85,12 @@ module Cache
     include Safety
     
     module Performance
+      def normalize_objects(objects)
+        objects = convert_to_array(cache_keys, objects)
+        objects = apply_limits_and_offsets(objects, @options1)
+        deserialize_objects(objects)
+      end
+      
       def convert_to_array(cache_keys, object)
         if object.kind_of?(Hash)
           cache_keys.collect { |key| object[@klass.cache_key(key)] }.flatten.compact
@@ -120,49 +123,47 @@ module Cache
   
   class Calculation < Query
     def initialize(klass, operation, column, options1, options2)
-      @klass, @operation, @column, @options1, @options2 = klass, operation, column, options1, options2 || {}
+      super(klass, options1, options2)
+      @operation, @column = operation, column
     end
     
     def perform(&block)
-      if cacheable?(@options1, @options2)
-        missed_keys = nil
-        objects = @klass.get(cache_key, :raw => true, &block).to_i
-      else
-        block.call
-      end
+      super({}, { :raw => true }, block, block)
     end
 
     protected
+    def normalize_objects(objects)
+      objects.to_i
+    end
+    
     def cacheable?(options1, options2)
       @column == :all && super(options1, options2)
     end
     
-    def cache_key
+    def cache_keys
       "#{super}/#{@operation}"
     end
   end
   
   class PrimaryKeyQuery < Query
     def initialize(klass, ids, options1, options2)
-      @klass, @options1, @options2 = klass, options1, options2
+      super(klass, options1, options2)
       @expects_array = ids.first.kind_of?(Array)
       @ids = ids.flatten.compact.uniq.collect(&:to_i)
     end
     
     def perform
       return [] if @ids.empty?
-      
-      if cacheable?(@options1, :conditions => { :id => @ids.first })
-        objects = @klass.get(cache_keys, &method(:find_from_keys))
-        objects = convert_to_array(cache_keys, objects)
-        objects = apply_limits_and_offsets(objects, @options1)
-        objects = convert_to_active_record_collection(objects)
-      else
+      super({:conditions => { :id => @ids.first }}, {}, method(:find_from_keys), lambda {
         @klass.send :find_from_ids_without_cache, @ids, @options1
-      end
+      })
     end
     
     private
+    def normalize_objects(objects)
+      convert_to_active_record_collection(super(objects))
+    end
+    
     def cache_keys
       @ids.collect { |id| "id/#{id}" }
     end
