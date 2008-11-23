@@ -1,3 +1,5 @@
+* remove closures
+* rename index_spec
 * test on AR::Base
 * windowing
 

@@ -68,18 +68,54 @@ module Cache
           end
         end
       end
-      
-      describe '#create!' do
+    end
+    
+    describe '#create!' do
+      describe 'when the cache is populated' do
         describe 'when you have > limit + buffer items' do
           it 'truncates when you have more than limit + buffer' do
+            fables, title = [], 'title'
+            (LIMIT + BUFFER).times { fables << Fable.create!(:title => title) }
+            Fable.get("title/#{title}").should == fables.collect(&:id)
+            Fable.create!(:title => title)
+            Fable.get("title/#{title}").should == fables.collect(&:id)
           end
         end
 
         describe 'when you have < limit + buffer items' do
+          it 'appends to the list' do
+            fables, title = [], 'title'
+            (LIMIT + BUFFER - 1).times { fables << Fable.create!(:title => title) }
+            Fable.get("title/#{title}").should == fables.collect(&:id)
+            fables << Fable.create!(:title => title)
+            Fable.get("title/#{title}").should == fables.collect(&:id)
+          end
         end
       end
-    end    
+      
+      describe 'when the cache is not populated' do
+        describe 'when you have > limit + buffer items' do
+          it 'truncates when you have more than limit + buffer' do
+            fables, title = [], 'title'
+            (LIMIT + BUFFER).times { fables << Fable.create!(:title => title) }
+            $memcache.flush_all
+            Fable.create!(:title => title)
+            Fable.get("title/#{title}").should == fables.collect(&:id)
+          end
+        end
 
+        describe 'when you have < limit + buffer items' do
+          it 'appends to the list' do
+            fables, title = [], 'title'
+            (LIMIT + BUFFER - 1).times { fables << Fable.create!(:title => title) }
+            $memcache.flush_all
+            fables << Fable.create!(:title => title)
+            Fable.get("title/#{title}").should == fables.collect(&:id)
+          end
+        end
+      end
+    end
+    
     describe '#destroy!' do
       describe 'when you have <= limit of items' do
         describe 'when the count is <= limit of items' do

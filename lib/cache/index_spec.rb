@@ -105,10 +105,11 @@ module Cache
       key, cache_value, cache_hit = get_key_and_value_at_index(attribute_value_pairs)
       if !cache_hit || overwrite
         object_to_add = serialize_object(object)
-        value = (cache_value + [object_to_add]).sort do |a, b|
+        objects = (cache_value + [object_to_add]).sort do |a, b|
           (a <=> b) * (order == :asc ? 1 : -1)
         end.uniq
-        set(key, value, :ttl => ttl)
+        objects = truncate(objects)
+        set(key, objects, :ttl => ttl)
         incr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
       end
     end
@@ -128,6 +129,10 @@ module Cache
         end
       end
       [key, cache_value, cache_hit]
+    end
+    
+    def truncate(objects)
+      objects.slice(0, window || objects.size)
     end
 
     def calculate_at_index(operation, attribute_value_pairs)
