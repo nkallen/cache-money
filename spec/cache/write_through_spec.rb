@@ -149,17 +149,6 @@ module Cache
       end
     end
 
-    describe 'Instance Methods' do
-      describe "#expire_cache" do
-        it "expires cache entries at keys where the object is indexed" do
-          story = Story.create!(:title => "some stuff")
-          story.expire_write_through_cache
-          Story.get("id/#{story.id}").should == nil
-          Story.get("title/#{story.title}").should == nil
-        end
-      end
-    end
-
     describe "Locking" do
       it "acquires and releases locks, in order, for all indices to be written" do
         pending

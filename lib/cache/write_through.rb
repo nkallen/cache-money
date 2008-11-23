@@ -12,26 +12,22 @@ module Cache
     module InstanceMethods
       def self.included(active_record_class)
         active_record_class.class_eval do
-          after_create :add_to_write_through_cache
-          after_update :update_write_through_cache
-          after_destroy :remove_from_write_through_cache
+          after_create :add_to_cache
+          after_update :update_cache
+          after_destroy :remove_from_cache
         end
       end
 
-      def add_to_write_through_cache
-        unfold { |klass| klass.add_to_write_through_cache(self) }
+      def add_to_cache
+        unfold { |klass| klass.add_to_cache(self) }
       end
 
-      def update_write_through_cache
-        unfold { |klass| klass.update_write_through_cache(self) }
+      def update_cache
+        unfold { |klass| klass.update_cache(self) }
       end
 
-      def remove_from_write_through_cache
-        unfold { |klass| klass.remove_from_write_through_cache(self) }
-      end
-
-      def expire_write_through_cache
-        unfold { |klass| klass.expire_write_through_cache(self) }
+      def remove_from_cache
+        unfold { |klass| klass.remove_from_cache(self) }
       end
 
       def shallow_clone
@@ -52,7 +48,7 @@ module Cache
     end
     
     module ClassMethods
-      def add_to_write_through_cache(object)
+      def add_to_cache(object)
         clone = object.shallow_clone
         indices.each do |attributes_in_the_index|
           _, new_attribute_value_pairs = old_and_new_attribute_value_pairs(attributes_in_the_index, object)
@@ -60,7 +56,7 @@ module Cache
         end
       end
 
-      def update_write_through_cache(object)
+      def update_cache(object)
         clone = object.shallow_clone
         indices.each do |attributes_in_the_index|
           old_attribute_value_pairs, new_attribute_value_pairs = old_and_new_attribute_value_pairs(attributes_in_the_index, object)
@@ -68,23 +64,14 @@ module Cache
         end
       end
 
-      def remove_from_write_through_cache(object)
+      def remove_from_cache(object)
         indices.each do |attributes_in_the_index|
           old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(attributes_in_the_index, object)
           remove_object_from_cache(old_attribute_value_pairs, object)
         end
       end
 
-      def expire_write_through_cache(object)
-        cache_keys = indices.collect do |attributes_in_the_index|
-          old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(attributes_in_the_index, object)
-          cache_key_for_index(old_attribute_value_pairs)
-        end
-        cache_keys.each { |key| expire(key) }
-      end
-
       private
-      
       def cache_key_for_index(attribute_value_pairs)
         attribute_value_pairs.flatten.join('/')
       end
