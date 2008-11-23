@@ -1,7 +1,7 @@
 module Cache
   class IndexSpec
     attr_reader :attributes, :options
-    delegate :each, :to => :@attributes
+    delegate :each, :hash, :to => :@attributes
     delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :incr, :decr, :to => :@active_record
 
     DEFAULT_OPTIONS = { :ttl => 1.day }
@@ -18,6 +18,7 @@ module Cache
         attributes == other
       end
     end
+    alias_method :eql?, :==
 
     def add(object)
       clone = object.shallow_clone

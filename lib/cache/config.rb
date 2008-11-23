@@ -23,7 +23,7 @@ module Cache
       end
 
       def index(attributes, options = {})
-        @cache_config.indices << IndexSpec.new(@cache_config, self, attributes, options)
+        (@cache_config.indices.unshift(IndexSpec.new(@cache_config, self, attributes, options))).uniq!
       end
 
       def cache_config=(config)
