@@ -250,7 +250,6 @@ module Cache
                 mock(Story.connection).execute.never
                 Story.find_by_title('title1').should == story1
               end
-
             end
           end
         end

@@ -2,16 +2,16 @@
 * Reorganize transactional spec
 * Deal with TTL issues
 * Clarify terminology around cache/key/index, etc.
-* always index on :id
-* reify index specification
+* remove private methods from finders
+* remove private methods from write_through
 * Uncovered update case
+* test on AR::Base
 
-* Deal with namespace pollution * scope private methods
 * rake brittspace
+
 * Incorporate local_cache
 * Incorporate cache_mock
 * Release new railsprof plugin
 * Release test helper (timings etc.)
 
 * Handle append strategy using add rather than set to avoid race condition
-* find_initial_with_cache doesn't seem to be necessary anymore, huh?

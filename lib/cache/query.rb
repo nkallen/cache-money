@@ -15,7 +15,7 @@ module Cache
     end
 
     def perform
-      if cacheable?
+      if cacheable?(@options1, @options2)
         cache_keys = cache_key
         objects = @klass.get(cache_keys) { |*missed_keys| @miss.call(missed_keys) }
         objects = convert_to_array(cache_keys, objects)
@@ -28,10 +28,10 @@ module Cache
     
     protected
     module Safety
-      def cacheable?
-        if safe_options_for_cache?(@options1) && safe_options_for_cache?(@options2)
-          return unless partial_index_1 = attribute_value_pairs_for_conditions(@options1[:conditions])
-          return unless partial_index_2 = attribute_value_pairs_for_conditions(@options2[:conditions])
+      def cacheable?(options1, options2)
+        if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
+          return unless partial_index_1 = attribute_value_pairs_for_conditions(options1[:conditions])
+          return unless partial_index_2 = attribute_value_pairs_for_conditions(options2[:conditions])
           @attribute_value_pairs = (partial_index_1 + partial_index_2).sort { |x, y| x[0] <=> y[0] }
           indexed_on?(@attribute_value_pairs.collect { |pair| pair[0] })
         end
@@ -90,7 +90,7 @@ module Cache
     module Performance
       def convert_to_array(cache_keys, object)
         if object.kind_of?(Hash)
-          cache_keys.collect { |key| object[key] }.flatten.compact
+          cache_keys.collect { |key| object[@klass.cache_key(key)] }.flatten.compact
         else
           Array(object)
         end
@@ -124,7 +124,7 @@ module Cache
     end
     
     def perform(&block)
-      if cacheable?
+      if cacheable?(@options1, @options2)
         missed_keys = nil
         objects = @klass.get(cache_key, :raw => true, &block).to_i
       else
@@ -133,12 +133,49 @@ module Cache
     end
 
     protected
-    def cacheable?
-      @column == :all && super
+    def cacheable?(options1, options2)
+      @column == :all && super(options1, options2)
     end
     
     def cache_key
       "#{super}/#{@operation}"
+    end
+  end
+  
+  class PrimaryKeyQuery < Query
+    def initialize(klass, ids, options1, options2)
+      @klass, @options1, @options2 = klass, options1, options2
+      @expects_array = ids.first.kind_of?(Array)
+      @ids = ids.flatten.compact.uniq.collect(&:to_i)
+    end
+    
+    def perform
+      return [] if @ids.empty?
+      
+      if cacheable?(@options1, :conditions => { :id => @ids.first })
+        objects = @klass.get(cache_keys, &method(:find_from_keys))
+        objects = convert_to_array(cache_keys, objects)
+        objects = apply_limits_and_offsets(objects, @options1)
+        objects = convert_to_active_record_collection(objects)
+      else
+        @klass.send :find_from_ids_without_cache, @ids, @options1
+      end
+    end
+    
+    private
+    def cache_keys
+      @ids.collect { |id| "id/#{id}" }
+    end
+    
+    def convert_to_active_record_collection(objects)
+      case objects.size
+      when 0
+        raise ActiveRecord::RecordNotFound
+      when 1
+        @expects_array ? objects : objects.first
+      else
+        objects
+      end
     end
   end
 end
