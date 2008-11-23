@@ -109,7 +109,7 @@ module Cache
         objects = (cache_value + [object_to_add]).sort do |a, b|
           (a <=> b) * (order == :asc ? 1 : -1)
         end.uniq
-        objects = truncate(objects)
+        objects = truncate_if_necessary(objects)
         set(key, objects, :ttl => ttl)
         incr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
       end
@@ -125,14 +125,14 @@ module Cache
       cache_value = get(key) do
         cache_hit = false
         conditions = Hash[*attribute_value_pairs.flatten]
-        find_every_without_cache(:select => :id, :conditions => conditions).collect do |object|
+        find_every_without_cache(:select => :id, :conditions => conditions, :limit => window).collect do |object|
           serialize_object(object)
         end
       end
       [key, cache_value, cache_hit]
     end
     
-    def truncate(objects)
+    def truncate_if_necessary(objects)
       objects.slice(0, window || objects.size)
     end
 
@@ -174,11 +174,11 @@ module Cache
       key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
       object_to_remove = serialize_object(object)
       objects = cache_value - [object_to_remove]
-      objects = refresh_if_necessary(attribute_value_pairs, objects)
+      objects = resize_if_necessary(attribute_value_pairs, objects)
       set(key, objects, :ttl => ttl)
     end
     
-    def refresh_if_necessary(attribute_value_pairs, objects)
+    def resize_if_necessary(attribute_value_pairs, objects)
       conditions = Hash[*attribute_value_pairs.flatten]
       key = cache_key(attribute_value_pairs)
       count = decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
