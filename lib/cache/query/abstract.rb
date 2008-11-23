@@ -3,6 +3,10 @@ module Cache
     class Abstract
       delegate :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :to => :@active_record
 
+      def self.perform(*args)
+        new(*args).perform
+      end
+      
       def initialize(active_record, options1, options2)
         @active_record, @options1, @options2 = active_record, options1, options2 || {}
       end
