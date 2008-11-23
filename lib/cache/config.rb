@@ -23,6 +23,7 @@ module Cache
       end
 
       def index(attributes, options = {})
+        options.assert_valid_keys(:ttl, :order, :limit, :buffer)
         (@cache_config.indices.unshift(IndexSpec.new(@cache_config, self, attributes, options))).uniq!
       end
 
