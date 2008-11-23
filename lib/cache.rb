@@ -9,7 +9,7 @@ require 'cache/transactional'
 require 'cache/write_through'
 require 'cache/finders'
 require 'cache/buffered'
-require 'cache/index_spec'
+require 'cache/index'
 require 'cache/config'
 require 'cache/accessor'
 

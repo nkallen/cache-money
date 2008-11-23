@@ -24,7 +24,7 @@ module Cache
 
       def index(attributes, options = {})
         options.assert_valid_keys(:ttl, :order, :limit, :buffer)
-        (@cache_config.indices.unshift(IndexSpec.new(@cache_config, self, attributes, options))).uniq!
+        (@cache_config.indices.unshift(Index.new(@cache_config, self, attributes, options))).uniq!
       end
 
       def cache_config=(config)
@@ -35,7 +35,7 @@ module Cache
     class Config
       attr_reader :active_record, :options
 
-      def self.create(active_record, options, indices = [IndexSpec.new(self, active_record, :id)])
+      def self.create(active_record, options, indices = [Index.new(self, active_record, :id)])
         active_record.cache_config = new(active_record, options)
         indices.each { |i| active_record.index i.attributes, i.options }
       end

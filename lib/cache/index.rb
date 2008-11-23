@@ -1,5 +1,5 @@
 module Cache
-  class IndexSpec
+  class Index
     attr_reader :attributes, :options
     delegate :each, :hash, :to => :@attributes
     delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :calculate_with_cache, :incr, :decr, :to => :@active_record
@@ -12,7 +12,7 @@ module Cache
 
     def ==(other)
       case other
-      when IndexSpec
+      when Index
         attributes == other.attributes
       else
         attributes == other

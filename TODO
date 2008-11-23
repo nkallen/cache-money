@@ -1,6 +1,5 @@
 * rename index_spec
 * test on AR::Base
-* windowing
 
 * Reorganize transactional spec
 * Clarify terminology around cache/key/index, etc.
