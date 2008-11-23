@@ -5,7 +5,7 @@ module Cache
     describe 'Cache Usage' do
       describe 'when the cache is populated' do
         describe '#find' do
-          describe 'when given an id' do
+          describe '#find(id)' do
             it 'does not use the database' do
               story = Story.create!
               mock(Story.connection).execute.never
@@ -43,7 +43,7 @@ module Cache
             describe 'find(:first, :readonly => true)' do
               it "uses the database, not the cache" do
                 story = Story.create!
-                mock(Story).fetch_cache.never
+                mock(Story).get.never
                 Story.find(:first, :conditions => { :id => story.id }, :readonly => true).should == story
               end
             end
@@ -51,7 +51,7 @@ module Cache
             describe 'find(:first, :join => ...) or find(..., :include => ...)' do
               it "uses the database, not the cache" do
                 story = Story.create!
-                mock(Story).fetch_cache.never
+                mock(Story).get.never
                 Story.find(:first, :conditions => { :id => story.id }, :joins => 'AS stories').should == story
                 Story.find(:first, :conditions => { :id => story.id }, :include => :characters).should == story
               end
@@ -59,16 +59,8 @@ module Cache
 
             describe 'find(:first)' do
               it 'uses the database, not the cache' do
-                mock(Story).fetch_cache.never
+                mock(Story).get.never
                 Story.find(:first)
-              end
-            end
-
-            describe 'find(:first, :conditions => { :id => ?, :other ...})' do
-              it 'uses the database, not the cache' do
-                story = Story.create!
-                mock(Story).fetch_cache.never
-                Story.find(:first, :conditions => { :id => story.id, :title => story.title }).should == story
               end
             end
 
@@ -76,7 +68,7 @@ module Cache
               describe 'on unindexed attributes' do
                 it 'uses the database, not the cache' do
                   story = Story.create!
-                  mock(Story).fetch_cache.never
+                  mock(Story).get.never
                   Story.find(:first, :conditions => "type IS NULL")
                 end
               end
@@ -135,6 +127,14 @@ module Cache
                   Story.find(:first, :conditions => { :title => story.title, :id => story.id }).should == story
                 end
               end
+              
+              describe 'on unindexed attribtes' do
+                it 'uses the database, not the cache' do
+                  story = Story.create!
+                  mock(Story).get.never
+                  Story.find(:first, :conditions => { :id => story.id, :type => story.type }).should == story
+                end
+              end
             end
           end
 
@@ -143,7 +143,7 @@ module Cache
               describe 'when the scope conditions is a string' do
                 it "uses the database, not the cache" do
                   story = Story.create!
-                  mock(Story).fetch_cache.never
+                  mock(Story).get.never
                   Story.send :with_scope, :find => { :conditions => 'type IS NULL'} do
                     Story.find(:first, :conditions => { :id => story.id })
                   end
@@ -153,7 +153,7 @@ module Cache
               describe 'when the find conditions is a string' do
                 it "uses the database, not the cache" do
                   story = Story.create!
-                  mock(Story).fetch_cache.never
+                  mock(Story).get.never
                   Story.send :with_scope, :find => { :conditions => { :id => story.id }} do
                     Story.find(:first, :conditions => "type IS NULL")
                   end
@@ -197,7 +197,7 @@ module Cache
         describe 'find(:all)' do
           it "uses the database, not the cache" do
             character = Character.create!
-            mock(Character).fetch_cache.never
+            mock(Character).get.never
             Character.find(:all).should == [character]
           end
 
@@ -228,7 +228,7 @@ module Cache
           it "uses the database, not the cache" do
             story1 = Story.create!
             story2 = Story.create!
-            mock(Story).fetch_cache.never
+            mock(Story).get.never
             Story.find([story1.id, story2.id], :conditions => "stories.id <= #{story2.id } AND type IS NULL")
           end
         end
@@ -275,7 +275,7 @@ module Cache
         
         describe '#find(:first, ...)' do
           it 'populates the cache' do
-            Story.find(:first, :conditions => {:title => @story.title})
+            Story.find(:first, :conditions => { :title => @story.title })
             Story.fetch("title/#{@story.title}").should == [@story.id]
           end
         end
@@ -289,7 +289,7 @@ module Cache
         
         describe '#find(:all, :conditions => ...)' do
           it 'populates the cache' do
-            Story.find(:all, :conditions => {:title => @story.title})
+            Story.find(:all, :conditions => { :title => @story.title })
             Story.fetch("title/#{@story.title}").should == [@story.id]
           end
         end
@@ -303,7 +303,7 @@ module Cache
         
         describe '#count' do
           it 'populates the cache' do
-            Story.count(:all, :conditions => {:title => @story.title})
+            Story.count(:all, :conditions => { :title => @story.title })
             Story.fetch("title/#{@story.title}/count").should =~ /1/
           end
         end

@@ -17,14 +17,14 @@ module Cache
 
         describe '#count(:column, :conditions => ...)' do
           it "uses the database, not the cache" do
-            mock(Story).fetch_cache.never
+            mock(Story).get.never
             Story.count(:title, :conditions => { :title => @title }).should == @stories.size
           end
         end
 
         describe '#count(:all, :distinct => ..., :select => ...)' do
           it 'uses the database, not the cache' do
-            mock(Story).fetch_cache.never
+            mock(Story).get.never
             Story.count(:all, :distinct => true, :select => :title, :conditions => { :title => @title }).should == @stories.collect(&:title).uniq.size
           end
         end
@@ -35,7 +35,7 @@ module Cache
               story = Story.create!
               characters = [story.characters.create!(:name => name = 'name'), story.characters.create!(:name => name)]
               mock(Story.connection).execute.never
-              story.characters.count(:all, :conditions => {:name => name}).should == characters.size
+              story.characters.count(:all, :conditions => { :name => name }).should == characters.size
             end
           end
         end

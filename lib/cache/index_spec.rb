@@ -39,9 +39,17 @@ module Cache
     def ttl
       @ttl ||= options[:ttl] || config.ttl
     end
+    
+    def order
+      @order ||= options[:order] || :asc
+    end
 
     def serialize_object(object)
       primary_key? ? object : object.id
+    end
+    
+    def matches?(query)
+      query.order == ['id', order]
     end
 
     private
@@ -83,7 +91,10 @@ module Cache
       key, cache_value, cache_hit = get_key_and_value_at_index(attribute_value_pairs)
       if !cache_hit || overwrite
         object_to_add = serialize_object(object)
-        set(key, (cache_value + [object_to_add]).uniq, :ttl => ttl)
+        value = (cache_value + [object_to_add]).sort do |a, b|
+          (a <=> b) * (order == :asc ? 1 : -1)
+        end.uniq
+        set(key, value, :ttl => ttl)
         incr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
       end
     end
@@ -126,7 +137,7 @@ module Cache
 
       key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
       object_to_remove = serialize_object(object)
-      set(key, (cache_value - [object_to_remove]).uniq, :ttl => ttl)
+      set(key, (cache_value - [object_to_remove]), :ttl => ttl)
       decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
     end
 

@@ -23,6 +23,19 @@ module Cache
         end
       end
 
+      DESC = /DESC/i
+      
+      def order
+        @order ||= begin
+          if order_sql = @options1[:order] || @options2[:order]
+            matched, table_name, column_name, direction = *(ORDER.match(order_sql))
+            [column_name, direction =~ DESC ? :desc : :asc]
+          else
+            ['id', :asc]
+          end
+        end
+      end
+
       private
       def cacheable?(options1, options2)
         if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
@@ -30,18 +43,20 @@ module Cache
           return unless partial_index_2 = attribute_value_pairs_for_conditions(options2[:conditions])
           attribute_value_pairs = (partial_index_1 + partial_index_2).sort { |x, y| x[0] <=> y[0] }
           if index = indexed_on?(attribute_value_pairs.collect { |pair| pair[0] })
-            [attribute_value_pairs, index]
+            if index.matches?(self)
+              [attribute_value_pairs, index]
+            end
           end
         end
       end
-
+      
       def cache_keys(attribute_value_pairs)
         attribute_value_pairs.flatten.join('/')
       end
 
       def safe_options_for_cache?(options)
         return false unless options.kind_of?(Hash)
-        options.except(:conditions, :readonly, :limit, :offset).values.compact.empty? && !options[:readonly]
+        options.except(:conditions, :readonly, :limit, :offset, :order).values.compact.empty? && !options[:readonly]
       end
 
       def attribute_value_pairs_for_conditions(conditions)
@@ -57,26 +72,23 @@ module Cache
         end
       end
 
-      # Matches: id = 1 AND name = 'foo'
       AND = /\s+AND\s+/i
-      # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123; id = 123, id = ?, id = '123', id = '12''3'; (id = 123)
-      KEY_EQ_VALUE = /^\(?(?:`?(\w+)`?\.)?`?(\w+)`? = '?(\d+|\?|(?:(?:[^']|'')*))'?\)?$/
-
+      TABLE_AND_COLUMN = /(?:`?(\w+)`?\.)?`?(\w+)`?/ # Matches: `users`.id, `users`.`id`, users.id, id
+      VALUE = /'?(\d+|\?|(?:(?:[^']|'')*))'?/ # Matches: 123, ?, '123', '12''3'
+      KEY_EQ_VALUE = /^\(?#{TABLE_AND_COLUMN}\s+=\s+#{VALUE}\)?$/ # Matches: KEY = VALUE, (KEY = VALUE)
+      ORDER = /^#{TABLE_AND_COLUMN}\s*(ASC|DESC)?$/i # Matches: COLUMN ASC, COLUMN DESC, COLUMN
+      
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup
         conditions.split(AND).inject([]) do |indices, condition|
           matched, table_name, column_name, sql_value = *(KEY_EQ_VALUE.match(condition))
-          if matched && table_name_is_name_of_current_active_record_class?(table_name)
+          if matched
             value = sql_value == '?' ? values.shift : sql_value
             indices << [column_name, value]
           else
             return nil
           end
         end
-      end
-
-      def table_name_is_name_of_current_active_record_class?(table_name)
-        !table_name || (table_name == table_name)
       end
 
       def indexed_on?(attributes)

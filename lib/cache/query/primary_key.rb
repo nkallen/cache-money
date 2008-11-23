@@ -9,7 +9,7 @@ module Cache
 
       def perform(&block)
         return [] if @ids.empty?
-        super({:conditions => { :id => @ids.first }}, {}, method(:find_from_keys), block)
+        super({ :conditions => { :id => @ids.first } }, {}, method(:find_from_keys), block)
       end
 
       private
