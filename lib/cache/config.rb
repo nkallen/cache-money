@@ -1,31 +1,5 @@
 module Cache
   module Config
-    class Config
-      attr_reader :active_record, :options
-      
-      def initialize(active_record, options = {})
-        @active_record = active_record
-        @options = options
-      end
-      
-      def repository
-        @options[:repository]
-      end
-      
-      def indices
-        @options[:indices] ||= []
-      end
-      
-      def options
-        @options.dup.merge(:indices => @options[:indices].dup)
-      end
-      
-      def dup(active_record)
-        active_record.cache_config = Config.new(active_record, options.except(:indices))
-        indices.each { |i| active_record.index i.attributes, i.options }
-      end
-    end
-    
     def self.included(a_module)
       a_module.module_eval do
         extend ClassMethods
@@ -54,6 +28,32 @@ module Cache
       
       def cache_config=(config)
         @cache_config = config
+      end
+    end
+    
+    class Config
+      attr_reader :active_record, :options
+      
+      def initialize(active_record, options = {})
+        @active_record = active_record
+        @options = options
+      end
+      
+      def repository
+        @options[:repository]
+      end
+      
+      def indices
+        @options[:indices] ||= []
+      end
+      
+      def options
+        @options.dup.merge(:indices => @options[:indices].dup)
+      end
+      
+      def dup(active_record)
+        active_record.cache_config = Config.new(active_record, options.except(:indices))
+        indices.each { |i| active_record.index i.attributes, i.options }
       end
     end
   end

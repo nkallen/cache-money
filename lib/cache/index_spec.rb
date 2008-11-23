@@ -25,6 +25,17 @@ module Cache
       add_to_index_with_minimal_network_operations(new_attribute_value_pairs, clone)
     end
     
+    def update(object)
+      clone = object.shallow_clone
+      old_attribute_value_pairs, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
+      update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, clone)
+    end
+    
+    def remove(object)
+      old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
+      remove_object_from_cache(old_attribute_value_pairs, object)
+    end
+    
     private
     def old_and_new_attribute_value_pairs(object)
       old_attribute_value_pairs = []
@@ -93,6 +104,30 @@ module Cache
     def calculate_at_index(operation, attribute_value_pairs)
       conditions = Hash[*attribute_value_pairs.flatten]
       calculate_without_cache(operation, :all, :conditions => conditions)
+    end
+    
+    def update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, object)
+      if index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
+        remove_object_from_cache(old_attribute_value_pairs, object)
+        add_object_to_cache(new_attribute_value_pairs, object)
+      elsif primary_key?(old_attribute_value_pairs)
+        add_object_to_primary_key_cache(new_attribute_value_pairs, object)
+      else
+        add_object_to_cache(new_attribute_value_pairs, object, false)
+      end
+    end
+
+    def remove_object_from_cache(attribute_value_pairs, object)
+      return if invalid_cache_key?(attribute_value_pairs)
+
+      key, cache_value, _ = get_key_and_value_at_index(attribute_value_pairs)
+      object_to_remove = serializable_object_formatted_for_index(attribute_value_pairs, object)
+      set(key, (cache_value - [object_to_remove]).uniq, options[:ttl])
+      decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
+    end
+
+    def index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
+      old_attribute_value_pairs != new_attribute_value_pairs
     end
   end
 end
