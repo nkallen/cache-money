@@ -9,11 +9,12 @@ module Cache
 
       def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
         if index = cacheable?(@options1, @options2.merge(find_options))
-          misses = nil
+          misses, missed_keys = nil, nil
           objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |*missed_keys|
-            serialize_objects(index, miss.call(missed_keys))
+            misses = miss.call(missed_keys)
+            serialize_objects(index, misses)
           end
-          format_results(objects)
+          missed_keys == cache_keys ? misses : format_results(objects)
         else
           uncacheable.call
         end
