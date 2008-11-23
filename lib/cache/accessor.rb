@@ -7,7 +7,7 @@ module Cache
     end
 
     module ClassMethods
-      def get(keys, options = {}, &block)
+      def fetch(keys, options = {}, &block)
         case keys
         when Array
           keys = keys.collect { |key| cache_key(key) }
@@ -22,7 +22,25 @@ module Cache
         end
       end
 
-      def set(key, value, ttl)
+      def get(keys, options = {:ttl => 1.day}, &block)
+        case keys
+        when Array
+          fetch(keys, options, &block)
+        else
+          fetch(keys, options) do
+            if block_given?
+              add(keys, result = yield, options[:ttl])
+              result
+            end
+          end
+        end
+      end
+
+      def add(key, value, ttl)
+        repository.add(cache_key(key), value, ttl)
+      end
+
+      def set(key, value, ttl = 0)
         repository.set(cache_key(key), value, ttl)
       end
 

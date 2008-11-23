@@ -1,11 +1,10 @@
 * Implement read-through strategy using add
 * Reorganize transactional spec
 * Clarify terminology around cache/key/index, etc.
-* Uncovered update case
 * test on AR::Base
+* windowing
 
 * rake brittspace
-
 * Incorporate local_cache
 * Incorporate cache_mock
 * Release new railsprof plugin

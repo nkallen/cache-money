@@ -8,8 +8,10 @@ module Cache
       end
 
       def perform(find_options = {}, get_options = {}, miss = @miss, uncacheable = @uncacheable)
-        if cacheable?(@options1, @options2.merge(find_options))
-          objects = get(cache_keys, get_options) { |*missed_keys| miss.call(missed_keys) }
+        if index = cacheable?(@options1, @options2.merge(find_options))
+          objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |*missed_keys|
+            miss.call(missed_keys)
+          end
           normalize_objects(objects)
         else
           uncacheable.call
@@ -71,8 +73,9 @@ module Cache
       end
 
       def indexed_on?(attributes)
-        indices.include?(attributes)
+        indices.detect { |index| index == attributes }
       end
+      alias_method :index_for, :indexed_on?
 
       def normalize_objects(objects)
         objects = convert_to_array(cache_keys, objects)
