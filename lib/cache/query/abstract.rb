@@ -2,7 +2,7 @@ module Cache
   module Query
     class Abstract
       delegate :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :to => :@active_record
-      
+
       def initialize(active_record, options1, options2)
         @active_record, @options1, @options2 = active_record, options1, options2 || {}
       end
@@ -29,7 +29,7 @@ module Cache
       def cache_keys
         @attribute_value_pairs.flatten.join('/')
       end
-      
+
       def safe_options_for_cache?(options)
         return false unless options.kind_of?(Hash)
         options.except(:conditions, :readonly, :limit, :offset).values.compact.empty? && !options[:readonly]
@@ -52,7 +52,7 @@ module Cache
       AND = /\s+AND\s+/i
       # Matches: `users`.id = 123, `users`.`id` = 123, users.id = 123; id = 123, id = ?, id = '123', id = '12''3'; (id = 123)
       KEY_EQ_VALUE = /^\(?(?:`?(\w+)`?\.)?`?(\w+)`? = '?(\d+|\?|(?:(?:[^']|'')*))'?\)?$/
-  
+
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup
         conditions.split(AND).inject([]) do |indices, condition|
@@ -73,13 +73,13 @@ module Cache
       def indexed_on?(attributes)
         indices.include?(attributes)
       end
-    
+
       def normalize_objects(objects)
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)
       end
-    
+
       def convert_to_array(cache_keys, object)
         if object.kind_of?(Hash)
           cache_keys.collect { |key| object[cache_key(key)] }.flatten.compact
@@ -101,7 +101,7 @@ module Cache
           convert_to_array(cache_keys, objects)
         end
       end
-    
+
       def find_from_keys(*missing_keys)
         missing_ids = missing_keys.flatten.collect { |key| key.split('/')[2].to_i }
         find_from_ids_without_cache(missing_ids, {})

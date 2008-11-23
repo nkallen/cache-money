@@ -113,7 +113,7 @@ module Cache
       @key = key
       @args = args
     end
-    
+
     def requires_lock?
       @name == :set
     end

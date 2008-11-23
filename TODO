@@ -1,6 +1,5 @@
 * Implement read-through strategy using add
 * Reorganize transactional spec
-* Deal with TTL issues
 * Clarify terminology around cache/key/index, etc.
 * Uncovered update case
 * test on AR::Base

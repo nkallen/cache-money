@@ -23,17 +23,17 @@ module Cache
               $memcache.flush_all
               @story2 = Story.create!(:title => "I am delicious")
             end
-            
+
             it 'inserts legacy objects into the cache' do
               Story.get("title/#{@story1.title}").should == [@story1.id, @story2.id]
             end
-            
+
             it 'initializes the count to account for the legacy objects' do
               Story.get("title/#{@story1.title}/count", :raw => true).should =~ /2/
             end
           end
         end
-        
+
         it "does not write through the cache on non-indexed attributes" do
           story = Story.create!(:title => "Story 1", :subtitle => "Subtitle")
           Story.get("subtitle/#{story.subtitle}").should == nil
@@ -50,14 +50,14 @@ module Cache
           story.save!
           Story.get("id/#{story.id}").first.characters.loaded?.should_not be
         end
-        
+
         it 'increments the count' do
           story = Story.create!(:title => "Sam")
           Story.get("title/#{story.title}/count", :raw => true).should =~ /1/
           story = Story.create!(:title => "Sam")
           Story.get("title/#{story.title}/count", :raw => true).should =~ /2/
         end
-        
+
         describe 'when the value is nil' do
           it "does not write through the cache on indexed attributes" do
             story = Story.create!(:title => nil)
@@ -87,7 +87,7 @@ module Cache
           story.update_attributes(:title => "I am fabulous")
           Story.get(cache_key).should == []
         end
-        
+
         it 'increments/decrements the counts of affected indices' do
           story = Story.create!(:title => original_title = "I am delicious")
           story.update_attributes(:title => new_title = "I am fabulous")
@@ -111,7 +111,7 @@ module Cache
           story.destroy
           Story.get(cache_key).should == []
         end
-        
+
         it 'decrements the count' do
           story = Story.create!(:title => "I am delicious")
           story.destroy
@@ -189,7 +189,7 @@ module Cache
           Epic.get("title/#{oral.title}").should == [oral.id]
           Oral.get("title/#{oral.title}").should == [oral.id]
         end
-      
+
         describe 'when one ancestor has its own indices' do
           it "it only populates those indices for that ancestor" do
             oral = Oral.create!(:subtitle => 'subtitle')

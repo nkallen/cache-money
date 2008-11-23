@@ -170,7 +170,7 @@ module Cache
                   story.characters.find(character.id).should == character
                 end
               end
-              
+
               describe 'find(1, 2, ...)' do
                 it "does not use the database" do
                   story = Story.create!
@@ -180,7 +180,7 @@ module Cache
                   story.characters.find(character1.id, character2.id).should == [character1, character2]
                 end
               end
-              
+
               describe 'find_by_attr' do
                 it "does not use the database" do
                   story = Story.create!
@@ -188,7 +188,7 @@ module Cache
                   mock(Character.connection).execute.never
                   story.characters.find_by_id(character.id).should == character
                 end
-                
+
               end
             end
           end
@@ -209,14 +209,14 @@ module Cache
               Story.find(:all, :conditions => { :title => story1.title }).should == [story1, story2]
             end
           end
-          
+
           describe 'find(:all, :limit => ..., :offset => ...)' do
             it "cached attributes should support limits and offsets" do
               character1 = Character.create!(:name => "Sam", :story_id => 1)
               character2 = Character.create!(:name => "Sam", :story_id => 1)
               character3 = Character.create!(:name => "Sam", :story_id => 1)
               mock(Character.connection).execute.never
-        
+
               Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :limit => 1).should == [character1]
               Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :offset => 1).should == [character2, character3]
               Character.find(:all, :conditions => { :name => character1.name, :story_id => character1.story_id }, :limit => 1, :offset => 1).should == [character2]

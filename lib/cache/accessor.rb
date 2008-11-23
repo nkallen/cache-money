@@ -5,7 +5,7 @@ module Cache
         extend ClassMethods
       end
     end
-    
+
     module ClassMethods
       def get(keys, options = {}, &block)
         case keys
@@ -25,7 +25,7 @@ module Cache
       def set(key, value, ttl)
         repository.set(cache_key(key), value, ttl)
       end
-    
+
       def incr(key, delta = 1)
         repository.incr(cache_key(key), delta) || begin
           repository.set(cache_key(key), 0)

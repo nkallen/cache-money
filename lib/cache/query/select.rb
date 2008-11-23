@@ -4,7 +4,7 @@ module Cache
       def miss(&block)
         @miss = block; self
       end
-  
+
       def uncacheable(&block)
         @uncacheable = block; self
       end

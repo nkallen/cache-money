@@ -40,7 +40,7 @@ module Cache
           end
         end
       end
-      
+
       describe 'when the cache is not populated' do
         describe '#count(:all, :conditions => ...)' do
           it "populates the count correctly" do
@@ -51,9 +51,9 @@ module Cache
           end
         end
       end
-      
+
       describe 'when objects are created and deleted' do
-        
+
       end
     end
   end

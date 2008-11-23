@@ -5,11 +5,11 @@ module Cache
     delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :incr, :decr, :to => :@active_record
 
     DEFAULT_OPTIONS = { :ttl => 1.day }
-    
+
     def initialize(config, active_record, attributes, options = {})
       @config, @active_record, @attributes, @options = config, active_record, Array(attributes).collect(&:to_s).sort, DEFAULT_OPTIONS.merge(options)
     end
-    
+
     def ==(other)
       case other
       when IndexSpec
@@ -18,28 +18,28 @@ module Cache
         attributes == other
       end
     end
-    
+
     def add(object)
       clone = object.shallow_clone
       _, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
       add_to_index_with_minimal_network_operations(new_attribute_value_pairs, clone)
     end
-    
+
     def update(object)
       clone = object.shallow_clone
       old_attribute_value_pairs, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
       update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, clone)
     end
-    
+
     def remove(object)
       old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
       remove_object_from_cache(old_attribute_value_pairs, object)
     end
-    
+
     def ttl
       @ttl ||= options[:ttl] || config.ttl
     end
-    
+
     private
     def old_and_new_attribute_value_pairs(object)
       old_attribute_value_pairs = []
@@ -52,7 +52,7 @@ module Cache
       end
       [old_attribute_value_pairs, new_attribute_value_pairs]
     end
-    
+
     def add_to_index_with_minimal_network_operations(attribute_value_pairs, object)
       if primary_key?(attribute_value_pairs)
         add_object_to_primary_key_cache(attribute_value_pairs, object)
@@ -60,19 +60,19 @@ module Cache
         add_object_to_cache(attribute_value_pairs, object)
       end
     end
-    
+
     def primary_key?(attribute_value_pairs)
       attribute_value_pairs.size == 1 && attribute_value_pairs.first.first.to_s == "id"
     end
-    
+
     def add_object_to_primary_key_cache(attribute_value_pairs, object)
       set(cache_key(attribute_value_pairs), [object], ttl)
     end
-    
+
     def cache_key(attribute_value_pairs)
       attribute_value_pairs.flatten.join('/')
     end
-    
+
     def add_object_to_cache(attribute_value_pairs, object, overwrite = true)
       return if invalid_cache_key?(attribute_value_pairs)
 
@@ -83,11 +83,11 @@ module Cache
         incr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
       end
     end
-    
+
     def invalid_cache_key?(attribute_value_pairs)
       attribute_value_pairs.collect { |_,value| value }.any? { |x| x.nil? }
     end
-    
+
     def get_key_and_value_at_index(attribute_value_pairs)
       key = cache_key(attribute_value_pairs)
       cache_hit = true
@@ -100,16 +100,16 @@ module Cache
       end
       [key, cache_value, cache_hit]
     end
-    
+
     def serializable_object_formatted_for_index(attribute_value_pairs, object)
       primary_key?(attribute_value_pairs) ? object : object.id
     end
-    
+
     def calculate_at_index(operation, attribute_value_pairs)
       conditions = Hash[*attribute_value_pairs.flatten]
       calculate_without_cache(operation, :all, :conditions => conditions)
     end
-    
+
     def update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, object)
       if index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
         remove_object_from_cache(old_attribute_value_pairs, object)

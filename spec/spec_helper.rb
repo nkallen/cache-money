@@ -22,16 +22,16 @@ Spec::Runner.configure do |config|
     Story.delete_all
     Character.delete_all
   end
-  
+
   config.before :suite do
     ActiveRecord::Base.class_eval do
       is_cached :repository => Cache::Transactional.new($memcache, $lock)
     end
-    
+
     Character = Class.new(ActiveRecord::Base)
     Story = Class.new(ActiveRecord::Base)
     Story.has_many :characters
-    
+
     Story.class_eval do
       index :title
       index [:id, :title]
@@ -39,12 +39,12 @@ Spec::Runner.configure do |config|
 
     Epic = Class.new(Story)
     Oral = Class.new(Epic)
-    
+
     Character.class_eval do
       index [:name, :story_id]
       index [:id, :story_id]
     end
-    
+
     Oral.class_eval do
       index :subtitle
     end

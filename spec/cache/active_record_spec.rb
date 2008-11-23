@@ -77,7 +77,7 @@ module Cache
               lambda { Story.find([1, 2, 3]) }.should raise_error(ActiveRecord::RecordNotFound)
             end
           end
-    
+
           describe 'when given limits and offsets' do
             describe 'find([1, 2, ...], :limit => ..., :offset => ...)' do
               it "returns the correct slice of objects" do
@@ -90,7 +90,7 @@ module Cache
                 ).should == [character1, character2]
               end
             end
-      
+
             describe 'find([1], :limit => 0)' do
               it "raises an error" do
                 character = Character.create!(:name => "Sam", :story_id => 1)
@@ -124,7 +124,7 @@ module Cache
             Story.find_by_id(nil).should == nil
           end
         end
-      
+
         describe 'when given non-existent ids' do
           it 'returns nil' do
             Story.find_by_id(-1).should == nil
@@ -140,7 +140,7 @@ module Cache
         end
       end
     end
-    
+
     describe 'when the cache is partially populated' do
       describe '#find(:all, :conditions => ...)' do
         it "returns the correct records" do
@@ -150,7 +150,7 @@ module Cache
           Story.find(:all, :conditions => { :title => story1.title }).should == [story1, story2]
         end
       end
-      
+
       describe '#find(id1, id2, ...)' do
         it "returns the correct records" do
           story1 = Story.create!(:title => 'story 1')
@@ -160,7 +160,7 @@ module Cache
         end
       end
     end
-    
+
     describe 'when the cache is not populated' do
       describe '#find(id)' do
         it "returns the correct records" do
@@ -169,7 +169,7 @@ module Cache
           Story.find(story.id).should == story
         end
       end
-      
+
       describe '#find(id1, id2, ...)' do
         it "should handle finds with multiple ids correctly" do
           story1 = Story.create!

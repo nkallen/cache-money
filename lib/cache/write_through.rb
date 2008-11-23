@@ -8,7 +8,7 @@ module Cache
         extend ClassMethods
       end
     end
-    
+
     module InstanceMethods
       def self.included(active_record_class)
         active_record_class.class_eval do
@@ -36,7 +36,7 @@ module Cache
         clone.instance_variable_set("@new_record", new_record?)
         clone
       end
-      
+
       private
       def self.unfold(klass)
         while klass < ActiveRecord::Base && klass.ancestors.include?(WriteThrough)
@@ -45,7 +45,7 @@ module Cache
         end
       end
     end
-    
+
     module ClassMethods
       def add_to_cache(object)
         indices.each { |index| index.add(object) }

@@ -9,7 +9,7 @@ module Cache
           index.on :title, :order => :desc, :limit => 100, :buffer => 100
         end
       end
-    
+
       describe "#find(:all, :conditions => ..., :order => 'id DESC')" do
       end
       describe "#find(:all, :conditions => ..., :order => 'table.id DESC')" do
@@ -22,11 +22,11 @@ module Cache
       end
       describe "#find(:all, :conditions => ..." do
       end
-      
+
       describe '#create!' do
       end
     end
-    
+
     describe '' do
       before do
         FairyTale = Class.new(Story)
