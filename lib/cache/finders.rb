@@ -28,7 +28,9 @@ module Cache
 
       # User.find(1), User.find(1, 2, 3), User.find([1, 2, 3]), User.find([])
       def find_from_ids_with_cache(ids, options)
-        Query::PrimaryKey.new(self, ids, options, scope(:find)).perform
+        Query::PrimaryKey.new(self, ids, options, scope(:find)).perform do
+          find_from_ids_without_cache(ids, options)
+        end
       end
 
       # User.count(:all), User.count, User.sum(...)

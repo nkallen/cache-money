@@ -7,11 +7,9 @@ module Cache
         @ids = ids.flatten.compact.uniq.collect(&:to_i)
       end
 
-      def perform
+      def perform(&block)
         return [] if @ids.empty?
-        super({:conditions => { :id => @ids.first }}, {}, method(:find_from_keys), lambda {
-          @klass.send :find_from_ids_without_cache, @ids, @options1
-        })
+        super({:conditions => { :id => @ids.first }}, {}, method(:find_from_keys), block)
       end
 
       private

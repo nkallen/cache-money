@@ -13,7 +13,7 @@ module Cache
           uncacheable.call
         end
       end
-    
+
       private
       def cacheable?(options1, options2)
         if safe_options_for_cache?(options1) && safe_options_for_cache?(options2)
