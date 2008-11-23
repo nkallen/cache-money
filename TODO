@@ -1,4 +1,3 @@
-* there's a bug with find(1, :conditions => ...) and with_scope
 * test on AR::Base
 * windowing
 
