@@ -19,7 +19,7 @@ module Cache
       
       def inherited_with_cache_config(subclass)
         inherited_without_cache_config(subclass)
-        @cache_config.dup(subclass)
+        @cache_config.inherit(subclass)
       end
       
       def index(attributes, options = {})
@@ -52,12 +52,8 @@ module Cache
         @options[:indices] ||= []
       end
       
-      def options
-        @options.dup.merge(:indices => @options[:indices].dup)
-      end
-      
-      def dup(active_record)
-        active_record.cache_config = self.class.new(active_record, options.except(:indices))
+      def inherit(active_record)
+        active_record.cache_config = self.class.new(active_record, @options.except(:indices))
         indices.each { |i| active_record.index i.attributes, i.options }
       end
     end
