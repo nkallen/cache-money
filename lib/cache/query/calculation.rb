@@ -1,8 +1,8 @@
 module Cache
   module Query
     class Calculation < Abstract
-      def initialize(klass, operation, column, options1, options2)
-        super(klass, options1, options2)
+      def initialize(active_record, operation, column, options1, options2)
+        super(active_record, options1, options2)
         @operation, @column = operation, column
       end
 

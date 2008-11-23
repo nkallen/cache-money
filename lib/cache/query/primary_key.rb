@@ -1,8 +1,8 @@
 module Cache
   module Query
     class PrimaryKey < Abstract
-      def initialize(klass, ids, options1, options2)
-        super(klass, options1, options2)
+      def initialize(active_record, ids, options1, options2)
+        super(active_record, options1, options2)
         @expects_array = ids.first.kind_of?(Array)
         @ids = ids.flatten.compact.uniq.collect(&:to_i)
       end
