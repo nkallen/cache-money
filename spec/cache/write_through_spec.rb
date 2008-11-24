@@ -127,6 +127,14 @@ module Cache
             Story.get(cache_key).should == [story2.id]
           end
         end
+        
+        describe 'when the object is a new record' do
+          it 'does nothing' do
+            story1 = Story.new
+            mock(Story).set.never
+            story1.destroy
+          end
+        end
 
         describe 'when the cache is not yet populated' do
           it "populates the cache with data" do

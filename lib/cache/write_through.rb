@@ -27,6 +27,8 @@ module Cache
       end
 
       def remove_from_cache
+        return if new_record?
+
         InstanceMethods.unfold(self.class) { |klass| klass.remove_from_cache(self) }
       end
 

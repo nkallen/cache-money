@@ -4,3 +4,6 @@
   end
 
   This does not trigger callbacks
+* update_all, delete, update_counter, increment_counter, decrement_counter, counter_caches in general
+* attr_readonly - no technical obstacle, just not yet supported
+* attributes before typecast behave unpredictably - hard to support

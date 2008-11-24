@@ -1,5 +1,6 @@
 * test on ARecord
 * transactional get multi isn't really multi
+* non "id" pks work but lack test coverage
 * package as GEM
 
 * Reorganize transactional spec
