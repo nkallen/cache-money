@@ -67,7 +67,7 @@ module Cache
 
         describe '#find([...])' do
           describe 'when given an array with valid ids' do
-            it "finds the object with that id" do
+            it "#finds the object with that id" do
               story = Story.create!
               Story.find([story.id]).should == [story]
             end
@@ -86,7 +86,7 @@ module Cache
           end
 
           describe 'when given limits and offsets' do
-            describe 'find([1, 2, ...], :limit => ..., :offset => ...)' do
+            describe '#find([1, 2, ...], :limit => ..., :offset => ...)' do
               it "returns the correct slice of objects" do
                 character1 = Character.create!(:name => "Sam", :story_id => 1)
                 character2 = Character.create!(:name => "Sam", :story_id => 1)
@@ -98,7 +98,7 @@ module Cache
               end
             end
 
-            describe 'find([1], :limit => 0)' do
+            describe '#find([1], :limit => 0)' do
               it "raises an error" do
                 character = Character.create!(:name => "Sam", :story_id => 1)
                 lambda do
@@ -109,15 +109,15 @@ module Cache
           end
         end
 
-        describe 'find(:first, ..., :offset => ...)' do
-          it "finds the object in the correct order" do
+        describe '#find(:first, ..., :offset => ...)' do
+          it "#finds the object in the correct order" do
             story1 = Story.create!(:title => 'title1')
             story2 = Story.create!(:title => story1.title)
             Story.find(:first, :conditions => { :title => story1.title }, :offset => 1).should == story2
           end
         end
 
-        describe 'find(:first, :conditions => [])' do
+        describe '#find(:first, :conditions => [])' do
           it 'works' do
             story = Story.create!
             Story.find(:first, :conditions => []).should == story

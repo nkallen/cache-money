@@ -5,7 +5,7 @@ module Cache
     describe 'Cache Usage' do
       describe 'when the cache is populated' do
         describe '#find' do
-          describe '#find(id)' do
+          describe '#find(1)' do
             it 'does not use the database' do
               story = Story.create!
               mock(Story.connection).execute.never
@@ -102,7 +102,7 @@ module Cache
               end
 
               describe '#find(:first, :conditions => [...])' do
-                describe 'with one indexed attributes' do
+                describe 'with one indexed attribute' do
                   it 'does not use the database' do
                     story = Story.create!
                     mock(Story.connection).execute.never
@@ -243,15 +243,24 @@ module Cache
             end
           end
 
-          describe '#find([1, 2, ...], :conditions => ...)' do
-            it "uses the database, not the cache" do
-              story1 = Story.create!
-              story2 = Story.create!
-              mock(Story).get.never
-              Story.find([story1.id, story2.id], :conditions => "stories.id <= #{story2.id } AND type IS NULL")
+          describe '#find([...])' do
+            describe '#find([1, 2, ...], :conditions => ...)' do
+              it "uses the database, not the cache" do
+                story1, story2 = Story.create!, Story.create!
+                mock(Story).get.never
+                Story.find([story1.id, story2.id], :conditions => "type IS NULL").should == [story1, story2]
+              end
+            end
+
+            describe '#find([1], :conditions => ...)' do
+              it "uses the database, not the cache" do
+                story1, story2 = Story.create!, Story.create!
+                mock(Story).get.never
+                Story.find([story1.id], :conditions => "type IS NULL").should == [story1]
+              end
             end
           end
-
+          
           describe '#find_by_attr' do
             describe 'on indexed attributes' do
               describe '#find_by_id(id)' do

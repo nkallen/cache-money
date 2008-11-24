@@ -35,7 +35,7 @@ module Cache
     class Config
       attr_reader :active_record, :options
 
-      def self.create(active_record, options, indices = [Index.new(self, active_record, :id)])
+      def self.create(active_record, options, indices = [])
         active_record.cache_config = new(active_record, options)
         indices.each { |i| active_record.index i.attributes, i.options }
       end
@@ -53,11 +53,11 @@ module Cache
       end
 
       def indices
-        @options[:indices] ||= []
+        @indices ||= active_record == ActiveRecord::Base ? [] : [Index.new(self, active_record, active_record.primary_key)]
       end
 
       def inherit(active_record)
-        self.class.create(active_record, @options.except(:indices), indices)
+        self.class.create(active_record, @options, indices)
       end
     end
   end

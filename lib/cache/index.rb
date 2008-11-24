@@ -15,7 +15,7 @@ module Cache
       when Index
         attributes == other.attributes
       else
-        attributes == other
+        attributes == Array(other)
       end
     end
     alias_method :eql?, :==
@@ -89,7 +89,7 @@ module Cache
     end
 
     def primary_key?
-      @attributes.size == 1 && @attributes.first == "id"
+      @attributes.size == 1 && @attributes.first == @active_record.primary_key
     end
 
     def add_object_to_primary_key_cache(attribute_value_pairs, object)

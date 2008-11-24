@@ -1,0 +1,6 @@
+* does not work with :dependent => nullify because
+  def nullify_has_many_dependencies(record, reflection_name, association_class, primary_key_name, dependent_conditions)
+    association_class.update_all("#{primary_key_name} = NULL", dependent_conditions)
+  end
+
+  This does not trigger callbacks

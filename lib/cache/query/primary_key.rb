@@ -4,6 +4,7 @@ module Cache
       def initialize(active_record, ids, options1, options2)
         super(active_record, options1, options2)
         @expects_array = ids.first.kind_of?(Array)
+        @original_ids = ids
         @ids = ids.flatten.compact.uniq.collect do |object|
           object.respond_to?(:quoted_id) ? object.quoted_id : object.to_i
         end
@@ -31,7 +32,7 @@ module Cache
       end
       
       def uncacheable
-        find_from_ids_without_cache(@ids, @options1)
+        find_from_ids_without_cache(@original_ids, @options1)
       end
 
       private
