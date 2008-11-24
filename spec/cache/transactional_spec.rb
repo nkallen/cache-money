@@ -94,6 +94,17 @@ module Cache
         end
         $memcache.get(@key).should == @value
       end
+      
+      describe 'when there is a return in the transaction' do
+        it 'commits to the real cache' do
+          $memcache.get(@key).should == nil
+          @cache.transaction do
+            @cache.set(@key, @value)
+            next
+          end
+          $memcache.get(@key).should == @value
+        end
+      end
 
       it "reads through the real cache if key has not been written to" do
         $memcache.set(@key, @value)
