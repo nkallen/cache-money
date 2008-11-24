@@ -187,6 +187,16 @@ module Cache
       end
       
       describe '#get_multi' do
+        describe 'when a hit value is the empty array' do
+          it 'returns a hash' do
+            @cache.transaction do
+              @cache.set('key1', @value)
+              @cache.set('key2', [])
+              @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => [] }
+            end
+          end
+        end
+        
         describe 'when everything is a hit' do
           it 'returns a hash' do
             @cache.transaction do
