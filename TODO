@@ -1,16 +1,26 @@
+TOP PRIORITY
 * test on ARecord
-* missing tests for Klass.transaction do ... end
 * transactional get multi isn't really multi
-* non "id" pks work but lack test coverage
 * package as GEM
 
+REFACTOR
 * Reorganize transactional spec
 * Clarify terminology around cache/key/index, etc.
 
-* rake brittspace
+INFRASTRUCTURE
+* rake britt:space
+
+NEW FEATURES
 * Incorporate local_cache
 * Incorporate cache_mock
+
+MISC
 * Release new railsprof plugin
 * Release test helper (timings etc.)
 
+BUGS
 * Handle append strategy (using add rather than set?) to avoid race condition
+
+MISSING TESTS:
+* missing tests for Klass.transaction do ... end
+* non "id" pks work but lack test coverage
