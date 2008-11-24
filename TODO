@@ -8,7 +8,6 @@ REFACTOR
 * Clarify terminology around cache/key/index, etc.
 
 INFRASTRUCTURE
-* rake britt:space
 
 NEW FEATURES
 * Incorporate local_cache

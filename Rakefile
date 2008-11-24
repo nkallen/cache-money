@@ -23,3 +23,10 @@ end
 
 desc "Default task is to run specs"
 task :default => :spec
+
+namespace :britt do
+  desc 'Removes trailing whitespace'
+  task :space do
+    sh %{find . -name '*.rb' -exec sed -i '' 's/ *$//g' {} \\;}
+  end
+end

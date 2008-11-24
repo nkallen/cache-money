@@ -76,7 +76,7 @@ module Cache
             @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => @value }
           end
         end
-        
+
         describe 'when there are misses' do
           it 'only returns results for hits' do
             @cache.set('key1', @value)
@@ -94,7 +94,7 @@ module Cache
         end
         $memcache.get(@key).should == @value
       end
-      
+
       describe 'when there is a return in the transaction' do
         it 'commits to the real cache' do
           $memcache.get(@key).should == nil
@@ -196,7 +196,7 @@ module Cache
           end
         end
       end
-      
+
       describe '#get_multi' do
         describe 'when a hit value is the empty array' do
           it 'returns a hash' do
@@ -207,7 +207,7 @@ module Cache
             end
           end
         end
-        
+
         describe 'when everything is a hit' do
           it 'returns a hash' do
             @cache.transaction do
@@ -217,7 +217,7 @@ module Cache
             end
           end
         end
-        
+
         describe 'when there are misses' do
           it 'only returns results for hits' do
             @cache.transaction do
@@ -290,7 +290,7 @@ module Cache
             $memcache.get_multi(['key1', 'key2']).should == {}
           end
         end
-        
+
         it "get is memoized" do
           @cache.set(@key, @value)
           @cache.transaction do

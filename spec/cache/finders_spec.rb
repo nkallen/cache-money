@@ -12,7 +12,7 @@ module Cache
               Story.find(story.id).should == story
             end
           end
-          
+
           describe '#find(object)' do
             it 'uses the objects quoted id' do
               story = Story.create!
@@ -135,7 +135,7 @@ module Cache
                   Story.find(:first, :conditions => { :title => story.title, :id => story.id }).should == story
                 end
               end
-              
+
               describe 'on unindexed attribtes' do
                 it 'uses the database, not the cache' do
                   story = Story.create!
@@ -167,7 +167,7 @@ module Cache
                   end
                 end
               end
-              
+
               describe '#find(1, :conditions => ...)' do
                 it "does not use the database" do
                   story = Story.create!
@@ -176,7 +176,7 @@ module Cache
                   Character.send :with_scope, :find => { :conditions => { :story_id => story.id } } do
                     Character.find(character.id, :conditions => { :name => name }).should == character
                   end
-                end                
+                end
               end
             end
 
@@ -210,7 +210,7 @@ module Cache
               end
             end
           end
-          
+
           describe '#find(:all)' do
             it "uses the database, not the cache" do
               character = Character.create!
@@ -260,7 +260,7 @@ module Cache
               end
             end
           end
-          
+
           describe '#find_by_attr' do
             describe 'on indexed attributes' do
               describe '#find_by_id(id)' do
@@ -295,34 +295,34 @@ module Cache
           end
         end
       end
-      
+
       describe 'when the cache is not populated' do
         before do
           @story = Story.create!(:title => 'title')
           $memcache.flush_all
         end
-        
+
         describe '#find(:first, ...)' do
           it 'populates the cache' do
             Story.find(:first, :conditions => { :title => @story.title })
             Story.fetch("title/#{@story.title}").should == [@story.id]
           end
         end
-        
+
         describe '#find_by_attr' do
           it 'populates the cache' do
             Story.find_by_title(@story.title)
             Story.fetch("title/#{@story.title}").should == [@story.id]
           end
         end
-        
+
         describe '#find(:all, :conditions => ...)' do
           it 'populates the cache' do
             Story.find(:all, :conditions => { :title => @story.title })
             Story.fetch("title/#{@story.title}").should == [@story.id]
           end
         end
-        
+
         describe '#find(1)' do
           it 'populates the cache' do
             Story.find(@story.id)

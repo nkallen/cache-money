@@ -25,12 +25,12 @@ module Cache
       def cache_keys(attribute_value_pairs)
         @ids.collect { |id| "id/#{id}" }
       end
-      
-      
+
+
       def miss(missing_keys, options)
         find_from_keys(*missing_keys)
       end
-      
+
       def uncacheable
         find_from_ids_without_cache(@original_ids, @options1)
       end

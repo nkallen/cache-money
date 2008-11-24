@@ -40,19 +40,19 @@ module Cache
     def ttl
       @ttl ||= options[:ttl] || config.ttl
     end
-    
+
     def order
       @order ||= options[:order] || :asc
     end
-    
+
     def limit
       options[:limit]
     end
-    
+
     def buffer
       options[:buffer]
     end
-    
+
     def window
       options[:limit] && options[:limit] + options[:buffer]
     end
@@ -60,7 +60,7 @@ module Cache
     def serialize_object(object)
       primary_key? ? object : object.id
     end
-    
+
     def matches?(query)
       query.calculation? ||
       (query.order == ['id', order] &&
@@ -131,7 +131,7 @@ module Cache
       end
       [key, cache_value, cache_hit]
     end
-    
+
     def truncate_if_necessary(objects)
       objects.slice(0, window || objects.size)
     end
@@ -155,7 +155,7 @@ module Cache
     def index_is_stale?(old_attribute_value_pairs, new_attribute_value_pairs)
       old_attribute_value_pairs != new_attribute_value_pairs
     end
-    
+
     def remove_from_index_with_minimal_network_operations(attribute_value_pairs, object)
       if primary_key?
         remove_object_from_primary_key_cache(attribute_value_pairs, object)
@@ -167,7 +167,7 @@ module Cache
     def remove_object_from_primary_key_cache(attribute_value_pairs, object)
       set(cache_key(attribute_value_pairs), [], :ttl => ttl)
     end
-    
+
     def remove_object_from_cache(attribute_value_pairs, object)
       return if invalid_cache_key?(attribute_value_pairs)
 
@@ -177,7 +177,7 @@ module Cache
       objects = resize_if_necessary(attribute_value_pairs, objects)
       set(key, objects, :ttl => ttl)
     end
-    
+
     def resize_if_necessary(attribute_value_pairs, objects)
       conditions = Hash[*attribute_value_pairs.flatten]
       key = cache_key(attribute_value_pairs)
@@ -185,7 +185,7 @@ module Cache
       if limit && objects.size < limit && objects.size < count
         find_every_without_cache(:select => :id, :conditions => conditions).collect do |object|
           serialize_object(object)
-        end        
+        end
       else
         objects
       end

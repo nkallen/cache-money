@@ -6,7 +6,7 @@ module Cache
       def self.perform(*args)
         new(*args).perform
       end
-      
+
       def initialize(active_record, options1, options2)
         @active_record, @options1, @options2 = active_record, options1, options2 || {}
       end
@@ -27,7 +27,7 @@ module Cache
       end
 
       DESC = /DESC/i
-      
+
       def order
         @order ||= begin
           if order_sql = @options1[:order] || @options2[:order]
@@ -38,15 +38,15 @@ module Cache
           end
         end
       end
-      
+
       def limit
         @limit ||= @options1[:limit] || @options2[:limit]
       end
-      
+
       def offset
         @offset ||= @options1[:offset] || @options2[:offset] || 0
       end
-      
+
       def calculation?
         false
       end
@@ -63,7 +63,7 @@ module Cache
           end
         end
       end
-      
+
       def cache_keys(attribute_value_pairs)
         attribute_value_pairs.flatten.join('/')
       end
@@ -91,7 +91,7 @@ module Cache
       VALUE = /'?(\d+|\?|(?:(?:[^']|'')*))'?/ # Matches: 123, ?, '123', '12''3'
       KEY_EQ_VALUE = /^\(?#{TABLE_AND_COLUMN}\s+=\s+#{VALUE}\)?$/ # Matches: KEY = VALUE, (KEY = VALUE)
       ORDER = /^#{TABLE_AND_COLUMN}\s*(ASC|DESC)?$/i # Matches: COLUMN ASC, COLUMN DESC, COLUMN
-      
+
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup
         conditions.split(AND).inject([]) do |indices, condition|
@@ -112,12 +112,12 @@ module Cache
 
       def format_results(cache_keys, objects)
         return objects if objects.blank?
-        
+
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)
       end
-      
+
       def serialize_objects(index, objects)
         Array(objects).collect { |missed| index.serialize_object(missed) }
       end

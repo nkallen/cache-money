@@ -41,6 +41,6 @@ module Cache
   module ClassMethods
     def transaction_with_cache_transaction(&block)
       repository.transaction { transaction_without_cache_transaction(&block) }
-    end    
+    end
   end
 end
