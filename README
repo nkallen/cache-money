@@ -1,0 +1,132 @@
+=== A single index ===
+
+{{{
+    $memcache = MemCache.new(config)
+    $memcache.servers = config['servers']
+    $lock = Cache::Lock.new($memcache)
+    $cache = Cache::Transactional.new($memcache, $lock)
+
+    class User
+      is_cached :repository => $cache
+      index :id
+    end
+}}}
+
+The `index :id` declaration:
+
+ * Adds a number of annotation to populate the cache when a `user` is created, updated, or deleted.
+ * Overrides some finders to first look in the cache, then the database. For example: `User.find`, `User.find_by_id`, `User.find(:conditions => {:id => ...})`, `User.find(:conditions => ['id = ?', ...])`, `User.find(:conditions => 'id = ...')`, `User.find(:conditions => 'users.id = ...')`, and `User.find(:conditions => '`users`.id = ...')`.
+ * Ensures that queries that must not hit the cache (e.g., if they include `:joins`) will hit the database instead.
+
+=== Multiple indices ===
+
+{{{
+    index :id
+    index :screen_name
+    index :email
+}}}
+
+This creates three indices, populates them as side effects of CUD operations, and overrides their corresponding finders (e.g., `User.find_by_screen_name` and all of the variations).
+
+=== Multi-key indices ===
+
+{{{
+    class Device
+      index [:user_id, :id]
+    end
+}}}
+
+This creates an index whose key is the concatenation of the two attributes. Finders will first look in the cache for these keys if they resemble `Device.find(:conditions => {:id => ..., :user_id => ...})`, `User.find(:conditions => "id = ... AND user_id = ...")`, etc.
+
+==== with_scope support ====
+
+`with_scope` and the like (`named_scope`, `has_many`, `belongs_to`, etc.) are fully supported. For example, `user.devices.find(1)` will first look in the `Device` cache for the index `[:user_id, :id]`.
+
+=== Collections ===
+
+{{{
+    class Devices
+      index [:user_id]
+    end
+}}}
+
+Collection indices are supported. For example, many devices may belong to the same user. Indexing devices on `user_id` will append new devices to that key on create, remove on delete, etc. `find` queries with `user_id` in the conditions will hit the cache before the database.
+
+=== Deletions ===
+
+In fact, all indices are treated as collection indices, even ones where the key is guaranteed unique (i.e., the cardinality of the index is 1). This allows us to support deletions correctly. `User.find(1)` will first hit the cache; if the cache value is `[]` (the empty array), then nil is returned--the database is never queried.
+
+=== Complex Queries ===
+
+{{{
+    class FriendRequest
+      index :requestor_id
+    end
+}}}
+
+In this example, `requestor_id` is a collection index. Limit and offset are supported. If the cache is populated, `FriendRequest.find(:all, :conditions => {:requestor_id => ...}, :limit => ..., :offset => ...)` will perform the limits and offsets with array arithmetic rather than a database query.
+
+=== Ordered indices ===
+
+{{{
+   class Message
+     index :sender_id, :order => :desc
+   end
+}}}
+
+The order declaration will ensure that the index is kept in the correctly sorted order. Only queries with order clauses compatible with the ordering in the index will use the cache: `Message.find(:all, :conditions => {:sender_id => ...})`, `Message.find(:all, :conditions => {:sender_id => ...}, :order => 'id DESC')`. Order clauses can be specified in many formats ("`messages`.id DESC", "`messages`.`id` DESC", and so forth), but ordering MUST be on the primary key column. Note that `Message.find(:all, :conditions => {:sender_id => ...}, :order => 'id ASC')` will NOT use the cache because the order in the query does not match the index.
+
+=== Window indices ===
+
+{{{
+   class Message
+     index :sender_id, :limit => 500, :buffer => 100
+   end
+}}}
+
+With a limit attribute, indices will only store limit + buffer in the cache. As new objects are created the index will be truncated, and as objects are destroyed, the cache will be refreshed if it has fewer than the limit of items. The buffer is how many "extra" items to keep around in case of deletes.
+
+=== Calculations ===
+
+`Message.count(:all, :conditions => {:sender_id => ...})` will use the cache rather than the database. This happens for "free" -- no additional declarations are necessary.
+
+=== Transactions ===
+
+Because of the parallel requests writing to the same indices, race conditions are possible. We have created a pessimistic "transactional" memcache client to handle the locking issues.
+
+The memcache client library has been enhanced to simulate transactions.
+
+{{{
+    CACHE.transaction do
+      CACHE.set(key1, value1)
+      CACHE.set(key2, value2)
+    end
+}}}
+
+The writes to the cache are buffered until the transaction is committed. Reads within the transaction read from the buffer. The writes are performed as if atomically, by acquiring locks, performing writes, and finally releasing locks. Special attention has been paid to ensure that deadlocks cannot occur and that the critical region (the duration of lock ownership) is as small as possible.
+
+Writes are not truly atomic as reads do not pay attention to locks. Therefore, it is possible to peak inside a partially committed transaction. This is a performance compromise, since acquiring a lock for a read was deemed too expensive. Again, the critical region is as small as possible, reducing the frequency of such "peeks".
+
+==== Rollbacks ====
+
+{{{
+    CACHE.transaction do
+      CACHE.set(k, v)
+      raise
+    end
+}}}
+
+Because transactions buffer writes, an exception in a transaction ensures that the writes are cleanly rolled-back (i.e., never committed to memcache). Database transactions are wrapped in memcache transactions, ensuring a database rollback also rolls back cache transactions.
+
+==== Nested transactions ====
+
+{{{
+    CACHE.transaction do
+      CACHE.set(k, v)
+      CACHE.transaction do
+        CACHE.get(k)
+      end
+    end
+}}}
+
+Nested transactions are fully supported, with partial rollback and (apparent) partial commitment (this is simulated with nested buffers).

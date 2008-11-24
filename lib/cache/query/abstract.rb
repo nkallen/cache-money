@@ -20,7 +20,7 @@ module Cache
             misses = miss(missed_keys, @options1.merge(:limit => index.window))
             serialize_objects(index, misses)
           end
-          format_results(cache_keys, missed_keys == cache_keys ? misses : objects)
+          format_results(cache_keys, choose_deserialized_objects_if_possible(missed_keys, cache_keys, misses, objects))
         else
           uncacheable
         end
@@ -116,6 +116,10 @@ module Cache
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)
+      end
+      
+      def choose_deserialized_objects_if_possible(missed_keys, cache_keys, misses, objects)
+        missed_keys == cache_keys ? misses : objects
       end
 
       def serialize_objects(index, objects)
