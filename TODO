@@ -1,6 +1,5 @@
 TOP PRIORITY
 * test on ARecord
-* transactional get multi isn't really multi
 * package as GEM
 
 REFACTOR
@@ -10,6 +9,7 @@ REFACTOR
 INFRASTRUCTURE
 
 NEW FEATURES
+* transactional get multi isn't really multi
 * Incorporate local_cache
 * Incorporate cache_mock
 

@@ -2,7 +2,7 @@ module Cache
   class Index
     attr_reader :attributes, :options
     delegate :each, :hash, :to => :@attributes
-    delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :calculate_with_cache, :incr, :decr, :to => :@active_record
+    delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :calculate_with_cache, :incr, :decr, :primary_key, :to => :@active_record
 
     DEFAULT_OPTIONS = { :ttl => 1.day }
 
@@ -89,7 +89,7 @@ module Cache
     end
 
     def primary_key?
-      @attributes.size == 1 && @attributes.first == @active_record.primary_key
+      @attributes.size == 1 && @attributes.first == primary_key
     end
 
     def add_object_to_primary_key_cache(attribute_value_pairs, object)
@@ -125,7 +125,7 @@ module Cache
       cache_value = get(key) do
         cache_hit = false
         conditions = Hash[*attribute_value_pairs.flatten]
-        find_every_without_cache(:select => :id, :conditions => conditions, :limit => window).collect do |object|
+        find_every_without_cache(:select => primary_key, :conditions => conditions, :limit => window).collect do |object|
           serialize_object(object)
         end
       end

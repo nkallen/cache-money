@@ -63,7 +63,7 @@ module Cache
       end
 
       def cache_key(postfix)
-        "#{name}/#{postfix.gsub(' ', '+')}"
+        "#{name}/#{postfix.gsub('+', '++').gsub('-', '--').gsub("\n", "-").gsub(' ', '+')}"
       end
     end
   end
