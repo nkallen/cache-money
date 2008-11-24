@@ -7,3 +7,4 @@
 * update_all, delete, update_counter, increment_counter, decrement_counter, counter_caches in general
 * attr_readonly - no technical obstacle, just not yet supported
 * attributes before typecast behave unpredictably - hard to support
+* ActiveRecord::Rollback is unsupported - the exception gets swallowed so there isn't an opportunity to rollback the cache transaction - not hard to support

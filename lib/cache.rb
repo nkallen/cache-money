@@ -31,11 +31,16 @@ module Cache
   def self.included(active_record_class)
     active_record_class.class_eval do
       include Config, Accessor, WriteThrough, Finders
-      alias_method_chain :transaction, :cache_transaction
+      extend ClassMethods
+      class << self
+        alias_method_chain :transaction, :cache_transaction
+      end
     end
   end
 
-  def transaction_with_cache_transaction(&block)
-    repository.transaction { transaction_without_cache_transaction(&block) }
+  module ClassMethods
+    def transaction_with_cache_transaction(&block)
+      repository.transaction { transaction_without_cache_transaction(&block) }
+    end    
   end
 end

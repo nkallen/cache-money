@@ -8,13 +8,14 @@ module Cache
     end
 
     def transaction
+      exception_was_raised = false
       begin_transaction
       result = yield
-      @cache.flush
-      result
     rescue Object => e
+      exception_was_raised = true
       raise
     ensure
+      @cache.flush unless exception_was_raised
       end_transaction
     end
 

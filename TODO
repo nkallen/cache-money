@@ -1,7 +1,9 @@
 * test on ARecord
+* missing tests for Klass.transaction do ... end
 * transactional get multi isn't really multi
 * non "id" pks work but lack test coverage
 * package as GEM
+* not test coverage of "return" inside a transaction
 
 * Reorganize transactional spec
 * Clarify terminology around cache/key/index, etc.
