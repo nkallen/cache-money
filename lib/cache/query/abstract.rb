@@ -111,6 +111,8 @@ module Cache
       alias_method :index_for, :indexed_on?
 
       def format_results(cache_keys, objects)
+        return objects if objects.blank?
+        
         objects = convert_to_array(cache_keys, objects)
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)

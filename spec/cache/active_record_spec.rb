@@ -48,6 +48,13 @@ module Cache
                 lambda { Story.find(1, 2, 3) }.should raise_error(ActiveRecord::RecordNotFound)
               end
             end
+            
+            
+            describe '#find(nil)' do
+              it 'raises an error' do
+                lambda { Story.find(nil) }.should raise_error(ActiveRecord::RecordNotFound)
+              end
+            end
           end
         end
 

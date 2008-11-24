@@ -62,7 +62,7 @@ module Cache
       buffer_command Command.new(:delete, key, *options)
     end
 
-    def get_multi(*args)
+    def get_multi(args)
       Hash[*args.zip(args.collect { |arg| get(arg) }).flatten]
     end
 

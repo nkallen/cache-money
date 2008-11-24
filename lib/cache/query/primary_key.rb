@@ -4,11 +4,15 @@ module Cache
       def initialize(active_record, ids, options1, options2)
         super(active_record, options1, options2)
         @expects_array = ids.first.kind_of?(Array)
-        @ids = ids.flatten.compact.uniq.collect(&:to_i)
+        @ids = ids.flatten.compact.uniq.collect do |object|
+          object.respond_to?(:quoted_id) ? object.quoted_id : object.to_i
+        end
       end
 
       def perform
-        return [] if @ids.empty?
+        return [] if @expects_array && @ids.empty?
+        raise ActiveRecord::RecordNotFound if @ids.empty?
+
         super(:conditions => { :id => @ids.first })
       end
 

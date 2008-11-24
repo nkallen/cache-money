@@ -1,5 +1,5 @@
-* rename index_spec
-* test on AR::Base
+* test on ARecord
+* package as GEM
 
 * Reorganize transactional spec
 * Clarify terminology around cache/key/index, etc.
@@ -10,4 +10,4 @@
 * Release new railsprof plugin
 * Release test helper (timings etc.)
 
-* Handle append strategy using add rather than set to avoid race condition
+* Handle append strategy (using add rather than set?) to avoid race condition
