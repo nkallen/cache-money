@@ -68,6 +68,22 @@ module Cache
         @cache.foo(:bar)
       end
 
+      describe '#get_multi' do
+        describe 'when everything is a hit' do
+          it 'returns a hash' do
+            @cache.set('key1', @value)
+            @cache.set('key2', @value)
+            @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => @value }
+          end
+        end
+        
+        describe 'when there are misses' do
+          it 'only returns results for hits' do
+            @cache.set('key1', @value)
+            @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value }
+          end
+        end
+      end
     end
 
     describe 'In a Transaction' do
@@ -168,7 +184,27 @@ module Cache
             end
           end
         end
-
+      end
+      
+      describe '#get_multi' do
+        describe 'when everything is a hit' do
+          it 'returns a hash' do
+            @cache.transaction do
+              @cache.set('key1', @value)
+              @cache.set('key2', @value)
+              @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => @value }
+            end
+          end
+        end
+        
+        describe 'when there are misses' do
+          it 'only returns results for hits' do
+            @cache.transaction do
+              @cache.set('key1', @value)
+              @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value }
+            end
+          end
+        end
       end
 
       describe 'Lock Acquisition' do
@@ -233,7 +269,7 @@ module Cache
             $memcache.get_multi(['key1', 'key2']).should == {}
           end
         end
-
+        
         it "get is memoized" do
           @cache.set(@key, @value)
           @cache.transaction do

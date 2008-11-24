@@ -320,6 +320,7 @@ module Cache
             Story.fetch("id/#{@story.id}").should == [@story]
           end
         end
+
       end
     end
   end

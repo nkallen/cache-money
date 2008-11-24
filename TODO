@@ -1,4 +1,5 @@
 * test on ARecord
+* transactional get multi isn't really multi
 * package as GEM
 
 * Reorganize transactional spec

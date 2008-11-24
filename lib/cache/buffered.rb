@@ -63,7 +63,7 @@ module Cache
     end
 
     def get_multi(args)
-      Hash[*args.zip(args.collect { |arg| get(arg) }).flatten]
+      Hash[*args.zip(args.collect { |arg| get(arg) }).reject { |key, value| value.nil? }.flatten]
     end
 
     def flush
