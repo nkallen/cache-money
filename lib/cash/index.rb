@@ -1,4 +1,4 @@
-module Cache
+module Cash
   class Index
     attr_reader :attributes, :options
     delegate :each, :hash, :to => :@attributes

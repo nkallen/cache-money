@@ -1,4 +1,4 @@
-module Cache
+module Cash
   module Query
     class PrimaryKey < Abstract
       def initialize(active_record, ids, options1, options2)

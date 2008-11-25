@@ -1,4 +1,4 @@
-module Cache
+module Cash
   module Query
     class Calculation < Abstract
       delegate :calculate_without_cache, :to => :@active_record

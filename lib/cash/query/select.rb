@@ -1,4 +1,4 @@
-module Cache
+module Cash
   module Query
     class Select < Abstract
       delegate :find_every_without_cache, :to => :@active_record

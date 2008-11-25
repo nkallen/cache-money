@@ -1,4 +1,4 @@
-module Cache
+module Cash
   class Lock
     class Error < RuntimeError; end
 

@@ -4,7 +4,7 @@ $LOAD_PATH.unshift "#{dir}/../lib"
 require 'rubygems'
 require 'spec'
 require 'pp'
-require 'cache'
+require 'cash'
 require 'memcache'
 require File.join(dir, '../config/environment')
 
@@ -14,7 +14,7 @@ Spec::Runner.configure do |config|
     config = YAML.load(IO.read((File.expand_path(File.dirname(__FILE__) + "/../config/memcache.yml"))))['test']
     $memcache = MemCache.new(config)
     $memcache.servers = config['servers']
-    $lock = Cache::Lock.new($memcache)
+    $lock = Cash::Lock.new($memcache)
   end
 
   config.before :each do
@@ -25,7 +25,7 @@ Spec::Runner.configure do |config|
 
   config.before :suite do
     ActiveRecord::Base.class_eval do
-      is_cached :repository => Cache::Transactional.new($memcache, $lock)
+      is_cached :repository => Cash::Transactional.new($memcache, $lock)
     end
 
     Character = Class.new(ActiveRecord::Base)

@@ -1,4 +1,4 @@
-module Cache
+module Cash
   class Buffered
     def self.push(cache, lock)
       if cache.is_a?(Buffered)

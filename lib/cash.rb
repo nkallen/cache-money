@@ -4,30 +4,30 @@ require 'rubygems'
 require 'activesupport'
 require 'activerecord'
 
-require 'cache/lock'
-require 'cache/transactional'
-require 'cache/write_through'
-require 'cache/finders'
-require 'cache/buffered'
-require 'cache/index'
-require 'cache/config'
-require 'cache/accessor'
+require 'cash/lock'
+require 'cash/transactional'
+require 'cash/write_through'
+require 'cash/finders'
+require 'cash/buffered'
+require 'cash/index'
+require 'cash/config'
+require 'cash/accessor'
 
-require 'cache/query/abstract'
-require 'cache/query/select'
-require 'cache/query/primary_key'
-require 'cache/query/calculation'
+require 'cash/query/abstract'
+require 'cash/query/select'
+require 'cash/query/primary_key'
+require 'cash/query/calculation'
 
-require 'cache/util/array'
+require 'cash/util/array'
 
 class ActiveRecord::Base
   def self.is_cached(options = {})
-    include Cache
+    include Cash
     Config.create(self, options)
   end
 end
 
-module Cache
+module Cash
   def self.included(active_record_class)
     active_record_class.class_eval do
       include Config, Accessor, WriteThrough, Finders

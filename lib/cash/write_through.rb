@@ -1,4 +1,4 @@
-module Cache
+module Cash
   module WriteThrough
     DEFAULT_TTL = 12.hours
 

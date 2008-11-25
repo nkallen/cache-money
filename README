@@ -3,8 +3,8 @@
 {{{
     $memcache = MemCache.new(config)
     $memcache.servers = config['servers']
-    $lock = Cache::Lock.new($memcache)
-    $cache = Cache::Transactional.new($memcache, $lock)
+    $lock = Cash::Lock.new($memcache)
+    $cache = Cash::Transactional.new($memcache, $lock)
 
     class User
       is_cached :repository => $cache

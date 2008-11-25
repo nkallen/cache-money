@@ -1,6 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
-module Cache
+module Cash
   describe 'Windows' do
     LIMIT, BUFFER = 5, 2
 

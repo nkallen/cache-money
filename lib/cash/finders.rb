@@ -1,4 +1,4 @@
-module Cache
+module Cash
   module Finders
     def self.included(active_record_class)
       active_record_class.class_eval do

@@ -1,6 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
-module Cache
+module Cash
   describe Accessor do
     describe '#fetch' do
       describe '#fetch("...")' do

@@ -1,4 +1,4 @@
-module Cache
+module Cash
   module Query
     class Abstract
       delegate :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :to => :@active_record

@@ -1,4 +1,4 @@
-module Cache
+module Cash
   class Transactional
     attr_reader :memcache
 

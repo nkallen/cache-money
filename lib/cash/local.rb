@@ -1,4 +1,4 @@
-module Cache
+module Cash
   class Local
     delegate :respond_to?, :to => :@remote_cache
 

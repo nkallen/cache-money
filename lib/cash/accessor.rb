@@ -1,4 +1,4 @@
-module Cache
+module Cash
   module Accessor
     def self.included(a_module)
       a_module.module_eval do

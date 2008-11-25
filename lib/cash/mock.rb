@@ -1,4 +1,4 @@
-module Cache
+module Cash
   class Mock < HashWithIndifferentAccess
     attr_accessor :servers
 

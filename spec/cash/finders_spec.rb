@@ -1,6 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
-module Cache
+module Cash
   describe Finders do
     describe 'Cache Usage' do
       describe 'when the cache is populated' do
