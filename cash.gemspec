@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
-  s.name     = "cache"
-  s.version  = "0.1.0"
+  s.name     = "cash"
+  s.version  = "0.1.1"
   s.date     = "2008-11-24"
   s.summary  = "Write-through Cacheing for ActiveRecord"
   s.email    = "nick@twitter.com"
@@ -12,36 +12,36 @@ Gem::Specification.new do |s|
     "README",
     "TODO",
     "UNSUPPORTED_FEATURES",
-    "lib/cache/accessor.rb",
-    "lib/cache/buffered.rb",
-    "lib/cache/config.rb",
-    "lib/cache/finders.rb",
-    "lib/cache/index.rb",
-    "lib/cache/local.rb",
-    "lib/cache/lock.rb",
-    "lib/cache/mock.rb",
-    "lib/cache/query/abstract.rb",
-    "lib/cache/query/calculation.rb",
-    "lib/cache/query/primary_key.rb",
-    "lib/cache/query/select.rb",
-    "lib/cache/transactional.rb",
-    "lib/cache/util/array.rb",
-    "lib/cache/write_through.rb",
-    "lib/cache.rb"
+    "lib/cash/accessor.rb",
+    "lib/cash/buffered.rb",
+    "lib/cash/config.rb",
+    "lib/cash/finders.rb",
+    "lib/cash/index.rb",
+    "lib/cash/local.rb",
+    "lib/cash/lock.rb",
+    "lib/cash/mock.rb",
+    "lib/cash/query/abstract.rb",
+    "lib/cash/query/calculation.rb",
+    "lib/cash/query/primary_key.rb",
+    "lib/cash/query/select.rb",
+    "lib/cash/transactional.rb",
+    "lib/cash/util/array.rb",
+    "lib/cash/write_through.rb",
+    "lib/cash.rb"
   ]
   s.test_files = [
     "config/environment.rb",
     "config/memcache.yml",
     "db/schema.rb",
-    "spec/cache/accessor_spec.rb",
-    "spec/cache/active_record_spec.rb",
-    "spec/cache/calculations_spec.rb",
-    "spec/cache/finders_spec.rb",
-    "spec/cache/lock_spec.rb",
-    "spec/cache/order_spec.rb",
-    "spec/cache/transactional_spec.rb",
-    "spec/cache/window_spec.rb",
-    "spec/cache/write_through_spec.rb",
+    "spec/cash/accessor_spec.rb",
+    "spec/cash/active_record_spec.rb",
+    "spec/cash/calculations_spec.rb",
+    "spec/cash/finders_spec.rb",
+    "spec/cash/lock_spec.rb",
+    "spec/cash/order_spec.rb",
+    "spec/cash/transactional_spec.rb",
+    "spec/cash/window_spec.rb",
+    "spec/cash/write_through_spec.rb",
     "spec/spec_helper.rb"
   ]
   s.add_dependency("activerecord", ["> 2.2.0"])
