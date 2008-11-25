@@ -9,8 +9,6 @@ INFRASTRUCTURE
 
 NEW FEATURES
 * transactional get multi isn't really multi
-* Incorporate local_cache
-* Incorporate cache_mock
 
 MISC
 * Release new railsprof plugin
