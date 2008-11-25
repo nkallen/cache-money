@@ -14,7 +14,6 @@ NEW FEATURES
 
 MISC
 * Release new railsprof plugin
-* Release test helper (timings etc.)
 
 BUGS
 * Handle append strategy (using add rather than set?) to avoid race condition
