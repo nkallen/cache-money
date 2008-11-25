@@ -62,8 +62,8 @@ module Cache
         repository.delete(cache_key(key))
       end
 
-      def cache_key(postfix)
-        "#{name}/#{postfix.gsub('+', '++').gsub('-', '--').gsub("\n", "-").gsub(' ', '+')}"
+      def cache_key(key)
+        "#{name}/#{key.gsub(' ', '+')}"
       end
     end
   end
