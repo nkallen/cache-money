@@ -7,7 +7,7 @@ module Cache
     end
 
     def cache_locally
-      @remote_cache = LocalCacheBuffer.new(original_cache = @remote_cache)
+      @remote_cache = LocalBuffer.new(original_cache = @remote_cache)
       yield
     ensure
       @remote_cache = original_cache
