@@ -3,6 +3,7 @@ module Cash
     def self.included(a_module)
       a_module.module_eval do
         extend ClassMethods
+        include InstanceMethods
       end
     end
 
@@ -21,6 +22,7 @@ module Cash
           repository.get(cache_key(keys), options[:raw]) || (block ? block.call : nil)
         end
       end
+      alias_method :fetch_cache, :fetch
 
       def get(keys, options = {}, &block)
         case keys
@@ -35,6 +37,7 @@ module Cash
           end
         end
       end
+      alias_method :get_cache, :get
 
       def add(key, value, options = {})
         repository.add(cache_key(key), value, options[:ttl] || 0, options[:raw])
@@ -43,6 +46,7 @@ module Cash
       def set(key, value, options = {})
         repository.set(cache_key(key), value, options[:ttl] || 0, options[:raw])
       end
+      alias_method :set_cache, :set
 
       def incr(key, delta = 1, ttl = 0)
         repository.incr(cache_key(key), delta) || begin
@@ -50,7 +54,7 @@ module Cash
           result
         end
       end
-
+      
       def decr(key, delta = 1, ttl = 0)
         repository.decr(cache_key(key), delta) || begin
           repository.set(cache_key(key), (result = yield).to_s, ttl, true)
@@ -63,8 +67,15 @@ module Cash
       end
 
       def cache_key(key)
-        "#{name}/#{key.gsub(' ', '+')}"
+        "#{name}/#{key.to_s.gsub(' ', '+')}"
       end
+    end
+    
+    module InstanceMethods
+      def expire
+        self.class.expire(id)
+      end
+      alias_method :expire_cache, :expire
     end
   end
 end
