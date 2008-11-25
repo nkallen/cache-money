@@ -117,7 +117,7 @@ module Cache
         objects = apply_limits_and_offsets(objects, @options1)
         deserialize_objects(objects)
       end
-      
+
       def choose_deserialized_objects_if_possible(missed_keys, cache_keys, misses, objects)
         missed_keys == cache_keys ? misses : objects
       end
