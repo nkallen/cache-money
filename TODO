@@ -1,5 +1,5 @@
 TOP PRIORITY
-* package as GEM
+* cache_fu adapter
 
 REFACTOR
 * Reorganize transactional spec
@@ -9,9 +9,6 @@ INFRASTRUCTURE
 
 NEW FEATURES
 * transactional get multi isn't really multi
-
-MISC
-* Release new railsprof plugin
 
 BUGS
 * Handle append strategy (using add rather than set?) to avoid race condition
