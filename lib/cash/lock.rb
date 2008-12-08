@@ -27,8 +27,7 @@ module Cash
         begin
           response = @cache.add("lock/#{key}", Process.pid, lock_expiry)
           return if response == "STORED\r\n"
-        rescue MemCache::MemCacheError
-          raise LockError if count == retries - 1
+          raise Error if count == retries - 1
         end
         exponential_sleep(count) unless count == retries - 1
       end

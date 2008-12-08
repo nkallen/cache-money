@@ -2,7 +2,7 @@ module Cash
   class Index
     attr_reader :attributes, :options
     delegate :each, :hash, :to => :@attributes
-    delegate :get, :set, :find_every_without_cache, :calculate_without_cache, :calculate_with_cache, :incr, :decr, :primary_key, :to => :@active_record
+    delegate :get, :set, :expire, :find_every_without_cache, :calculate_without_cache, :calculate_with_cache, :incr, :decr, :primary_key, :to => :@active_record
 
     DEFAULT_OPTIONS = { :ttl => 1.day }
 
@@ -35,6 +35,12 @@ module Cash
     def remove(object)
       old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
       remove_from_index_with_minimal_network_operations(old_attribute_value_pairs, object)
+    end
+    
+    def delete(object)
+      old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
+      key = cache_key(old_attribute_value_pairs)
+      expire(key)
     end
 
     def ttl

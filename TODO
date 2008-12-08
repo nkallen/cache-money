@@ -19,3 +19,4 @@ BUGS
 MISSING TESTS:
 * missing tests for Klass.transaction do ... end
 * non "id" pks work but lack test coverage
+* expire_cache

@@ -42,12 +42,21 @@ module Cash
       end
 
       describe 'when the cache is not populated' do
-        describe '#count(:all, :conditions => ...)' do
-          it "populates the count correctly" do
-            Story.create!(:title => title = 'title')
-            $memcache.flush_all
-            Story.count(:all, :conditions => { :title => title }).should == 1
-            Story.fetch("title/#{title}/count").should =~ /1/
+        describe '#count(:all, ...)' do
+          describe '#count(:all)' do
+            it 'uses the database, not the cache' do
+              mock(Story).get.never
+              Story.count
+            end
+          end
+          
+          describe '#count(:all, :conditions => ...)' do
+            it "populates the count correctly" do
+              Story.create!(:title => title = 'title')
+              $memcache.flush_all
+              Story.count(:all, :conditions => { :title => title }).should == 1
+              Story.fetch("title/#{title}/count").should =~ /1/
+            end
           end
         end
       end
