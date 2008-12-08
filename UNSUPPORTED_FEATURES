@@ -3,10 +3,12 @@
     association_class.update_all("#{primary_key_name} = NULL", dependent_conditions)
   end
   This does not trigger callbacks
-* update_all, delete, update_counter, increment_counter, decrement_counter, counter_caches in general
+* update_all, delete, update_counter, increment_counter, decrement_counter, counter_caches in general - counter caches are replaced by this gem, bear that in mind.
 * attr_readonly - no technical obstacle, just not yet supported
 * attributes before typecast behave unpredictably - hard to support
 * ActiveRecord::Rollback is unsupported - the exception gets swallowed so there isn't an opportunity to rollback the cache transaction - not hard to support
-* Named bind variables :conditions => ["name = :name", { :name => "37signals!" }]
-* printf style binds: :conditions => ["name = '%s'", "37signals!"]
+* Named bind variables :conditions => ["name = :name", { :name => "37signals!" }] - not hard to support
+* printf style binds: :conditions => ["name = '%s'", "37signals!"] - not too hard to support
 * objects as attributes that are serialized. story.title = {:foo => :bar}; customer.balance = Money.new(...) - these could be coerced using Column#type_cast?
+
+With a lot of these features the issue is not technical but performance. Every special case costs some overhead.
