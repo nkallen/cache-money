@@ -20,49 +20,55 @@ module Cash
     end
     alias_method :eql?, :==
 
-    def add(object)
-      clone = object.shallow_clone
-      _, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
-      add_to_index_with_minimal_network_operations(new_attribute_value_pairs, clone)
-    end
+    module Commands
+      def add(object)
+        clone = object.shallow_clone
+        _, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
+        add_to_index_with_minimal_network_operations(new_attribute_value_pairs, clone)
+      end
 
-    def update(object)
-      clone = object.shallow_clone
-      old_attribute_value_pairs, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
-      update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, clone)
-    end
+      def update(object)
+        clone = object.shallow_clone
+        old_attribute_value_pairs, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
+        update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, clone)
+      end
 
-    def remove(object)
-      old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
-      remove_from_index_with_minimal_network_operations(old_attribute_value_pairs, object)
-    end
+      def remove(object)
+        old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
+        remove_from_index_with_minimal_network_operations(old_attribute_value_pairs, object)
+      end
     
-    def delete(object)
-      old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
-      key = cache_key(old_attribute_value_pairs)
-      expire(key)
+      def delete(object)
+        old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
+        key = cache_key(old_attribute_value_pairs)
+        expire(key)
+      end
     end
+    include Commands
+    
+    module Attributes
+      def ttl
+        @ttl ||= options[:ttl] || config.ttl
+      end
 
-    def ttl
-      @ttl ||= options[:ttl] || config.ttl
+      def order
+        @order ||= options[:order] || :asc
+      end
+
+      def limit
+        options[:limit]
+      end
+
+      def buffer
+        options[:buffer]
+      end
+
+      def window
+        options[:limit] && options[:limit] + options[:buffer]
+      end
     end
-
-    def order
-      @order ||= options[:order] || :asc
-    end
-
-    def limit
-      options[:limit]
-    end
-
-    def buffer
-      options[:buffer]
-    end
-
-    def window
-      options[:limit] && options[:limit] + options[:buffer]
-    end
-
+    include Attributes
+    
     def serialize_object(object)
       primary_key? ? object : object.id
     end
