@@ -23,13 +23,13 @@ module Cash
     end
 
     def incr(key, amount = 1)
-      self[key] ||= 0
-      self[key] += amount
+      self[key] ||= '0'
+      self[key] = (self[key].to_i + amount).to_s
     end
 
     def decr(key, amount = 1)
-      self[key] ||= 0
-      self[key] -= amount
+      self[key] ||= '0'
+      self[key] = (self[key].to_i - amount).to_s
     end
 
     def add(key, value, *options)
