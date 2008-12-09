@@ -16,6 +16,10 @@ module Cash
           end
         end
       end
+      
+      def without_cache(&block)
+        User.with_scope(:find => {:readonly => true}, &block)
+      end
 
       # User.find(:first, ...), User.find_by_foo(...), User.find(:all, ...), User.find_all_by_foo(...)
       def find_every_with_cache(options)

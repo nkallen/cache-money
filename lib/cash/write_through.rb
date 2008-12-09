@@ -30,7 +30,7 @@ module Cash
         return if new_record?
         InstanceMethods.unfold(self.class, :remove_from_caches, self)
       end
-      
+
       def expire_caches
         InstanceMethods.unfold(self.class, :expire_caches, self)
       end

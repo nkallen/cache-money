@@ -92,10 +92,10 @@ module Cash
       end
 
       AND = /\s+AND\s+/i
-      TABLE_AND_COLUMN = /(?:`?(\w+)`?\.)?`?(\w+)`?/ # Matches: `users`.id, `users`.`id`, users.id, id
-      VALUE = /'?(\d+|\?|(?:(?:[^']|'')*))'?/ # Matches: 123, ?, '123', '12''3'
+      TABLE_AND_COLUMN = /(?:`?(\w+)`?\.)?`?(\w+)`?/              # Matches: `users`.id, `users`.`id`, users.id, id
+      VALUE = /'?(\d+|\?|(?:(?:[^']|'')*))'?/                     # Matches: 123, ?, '123', '12''3'
       KEY_EQ_VALUE = /^\(?#{TABLE_AND_COLUMN}\s+=\s+#{VALUE}\)?$/ # Matches: KEY = VALUE, (KEY = VALUE)
-      ORDER = /^#{TABLE_AND_COLUMN}\s*(ASC|DESC)?$/i # Matches: COLUMN ASC, COLUMN DESC, COLUMN
+      ORDER = /^#{TABLE_AND_COLUMN}\s*(ASC|DESC)?$/i              # Matches: COLUMN ASC, COLUMN DESC, COLUMN
 
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup

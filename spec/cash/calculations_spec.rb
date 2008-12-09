@@ -10,7 +10,6 @@ module Cash
 
         describe '#count(:all, :conditions => ...)' do
           it "does not use the database" do
-            mock(Story.connection).execute.never
             Story.count(:all, :conditions => { :title => @title }).should == @stories.size
           end
         end
@@ -51,11 +50,14 @@ module Cash
           end
           
           describe '#count(:all, :conditions => ...)' do
-            it "populates the count correctly" do
-              Story.create!(:title => title = 'title')
+            before do
+              Story.create!(:title => @title = 'title')
               $memcache.flush_all
-              Story.count(:all, :conditions => { :title => title }).should == 1
-              Story.fetch("title/#{title}/count").should =~ /1/
+            end
+            
+            it "populates the count correctly" do
+              Story.count(:all, :conditions => { :title => @title }).should == 1
+              Story.fetch("title/#{@title}/count", :raw => true).should =~ /\s*1\s*/
             end
           end
         end

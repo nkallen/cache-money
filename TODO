@@ -9,6 +9,7 @@ INFRASTRUCTURE
 
 NEW FEATURES
 * transactional get multi isn't really multi
+* add on "not stored" should yield
 
 BUGS
 * Handle append strategy (using add rather than set?) to avoid race condition

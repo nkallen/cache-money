@@ -30,7 +30,7 @@ module Cash
         else
           fetch(keys, options) do
             if block_given?
-              add(keys, result = yield(keys))
+              add(keys, result = yield(keys), options)
               result
             end
           end
@@ -47,14 +47,14 @@ module Cash
 
       def incr(key, delta = 1, ttl = 0)
         repository.incr(cache_key(key), delta) || begin
-          repository.set(cache_key(key), (result = yield).to_s, ttl, true)
+          repository.add(cache_key(key), (result = yield).to_s, ttl, true)
           result
         end
       end
       
       def decr(key, delta = 1, ttl = 0)
         repository.decr(cache_key(key), delta) || begin
-          repository.set(cache_key(key), (result = yield).to_s, ttl, true)
+          repository.add(cache_key(key), (result = yield).to_s, ttl, true)
           result
         end
       end
