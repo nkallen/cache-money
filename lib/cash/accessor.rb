@@ -15,7 +15,7 @@ module Cash
           hits = repository.get_multi(keys)
           if (missed_keys = keys - hits.keys).any?
             missed_values = block.call(missed_keys)
-            hits.merge!(Hash[*missed_keys.zip(Array(missed_values)).flatten])
+            hits.merge!(missed_keys.zip(Array(missed_values)).to_hash)
           end
           hits
         else

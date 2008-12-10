@@ -50,7 +50,7 @@ module Cash
         $memcache.add(@key, @value)
         $memcache.get(@key).should == @value
 
-        @cache.delete(@key, options)
+        @cache.delete(@key)
         $memcache.get(@key).should be_nil
       end
 

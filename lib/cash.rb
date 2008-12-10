@@ -13,6 +13,10 @@ require 'cash/index'
 require 'cash/config'
 require 'cash/accessor'
 
+require 'cash/request'
+require 'cash/mock'
+require 'cash/local'
+
 require 'cash/query/abstract'
 require 'cash/query/select'
 require 'cash/query/primary_key'

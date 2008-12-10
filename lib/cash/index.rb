@@ -136,7 +136,7 @@ module Cash
       cache_hit = true
       cache_value = get(key) do
         cache_hit = false
-        conditions = Hash[*attribute_value_pairs.flatten]
+        conditions = attribute_value_pairs.to_hash
         find_every_without_cache(:select => primary_key, :conditions => conditions, :limit => window).collect do |object|
           serialize_object(object)
         end
@@ -149,7 +149,7 @@ module Cash
     end
 
     def calculate_at_index(operation, attribute_value_pairs)
-      conditions = Hash[*attribute_value_pairs.flatten]
+      conditions = attribute_value_pairs.to_hash
       calculate_without_cache(operation, :all, :conditions => conditions)
     end
 
@@ -191,9 +191,10 @@ module Cash
     end
 
     def resize_if_necessary(attribute_value_pairs, objects)
-      conditions = Hash[*attribute_value_pairs.flatten]
+      conditions = attribute_value_pairs.to_hash
       key = cache_key(attribute_value_pairs)
       count = decr("#{key}/count") { calculate_at_index(:count, attribute_value_pairs) }
+
       if limit && objects.size < limit && objects.size < count
         find_every_without_cache(:select => :id, :conditions => conditions).collect do |object|
           serialize_object(object)
