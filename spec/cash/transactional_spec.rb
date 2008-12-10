@@ -105,7 +105,7 @@ module Cash
           $memcache.get(@key).should == @value
         end
       end
-      
+
       it "reads through the real cache if key has not been written to" do
         $memcache.set(@key, @value)
         @cache.transaction do

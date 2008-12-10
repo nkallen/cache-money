@@ -51,7 +51,7 @@ module Cash
           result
         end
       end
-      
+
       def decr(key, delta = 1, ttl = 0)
         repository.decr(cache_key(key), delta) || begin
           repository.add(cache_key(key), (result = yield).to_s, ttl, true)
@@ -67,7 +67,7 @@ module Cash
         "#{name}/#{key.to_s.gsub(' ', '+')}"
       end
     end
-    
+
     module InstanceMethods
       def expire
         self.class.expire(id)

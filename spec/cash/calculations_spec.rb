@@ -48,13 +48,13 @@ module Cash
               Story.count
             end
           end
-          
+
           describe '#count(:all, :conditions => ...)' do
             before do
               Story.create!(:title => @title = 'title')
               $memcache.flush_all
             end
-            
+
             it "populates the count correctly" do
               Story.count(:all, :conditions => { :title => @title }).should == 1
               Story.fetch("title/#{@title}/count", :raw => true).should =~ /\s*1\s*/

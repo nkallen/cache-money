@@ -16,7 +16,7 @@ module Cash
           end
         end
       end
-      
+
       def without_cache(&block)
         User.with_scope(:find => {:readonly => true}, &block)
       end

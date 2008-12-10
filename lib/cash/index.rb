@@ -37,7 +37,7 @@ module Cash
         old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
         remove_from_index_with_minimal_network_operations(old_attribute_value_pairs, object)
       end
-    
+
       def delete(object)
         old_attribute_value_pairs, _ = old_and_new_attribute_value_pairs(object)
         key = cache_key(old_attribute_value_pairs)
@@ -45,7 +45,7 @@ module Cash
       end
     end
     include Commands
-    
+
     module Attributes
       def ttl
         @ttl ||= options[:ttl] || config.ttl
@@ -68,7 +68,7 @@ module Cash
       end
     end
     include Attributes
-    
+
     def serialize_object(object)
       primary_key? ? object : object.id
     end

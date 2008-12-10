@@ -45,7 +45,7 @@ module Cash
         alias_method_chain :transaction, :cache_transaction
       end
     end
-    
+
     def transaction_with_cache_transaction(&block)
       repository.transaction { transaction_without_cache_transaction(&block) }
     end

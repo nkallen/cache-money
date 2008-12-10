@@ -63,7 +63,7 @@ module Cash
       def remove_from_caches(object)
         indices.each { |index| index.remove(object) }
       end
-      
+
       def expire_caches(object)
         indices.each { |index| index.delete(object) }
       end
