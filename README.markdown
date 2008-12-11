@@ -128,6 +128,12 @@ Sometimes your code will request the same cache key twice in one request. You ca
   $cache = Cash::Transactional.new($local, $lock)
 
 ## Installation ##
+
+#### Step 0: Get the GEM ####
+
+    % gem sources -a http://gems.github.com
+    % sudo gem install nkallen-cache-money
+
 #### Step 1: `config/initializers/cache_money.rb` ####
 
 Place this in `config/initializers/cache_money.rb`
