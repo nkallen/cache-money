@@ -32,7 +32,6 @@ In this example, only queries whose limit and offset are less than 1000 will use
 ### Multiple indices are supported ###
 
     class User
-      index :id
       index :screen_name
       index :email
     end
@@ -139,7 +138,7 @@ Sometimes your code will request the same cache key twice in one request. You ca
 Place this in `config/initializers/cache_money.rb`
     require 'cache-money'
     
-    config = YAML.load(IO.read(".../config/memcache.yml"))[RAILS_ENV]
+    config = YAML.load(IO.read(File.join(RAILS_ROOT, "../config/memcache.yml"))[RAILS_ENV]
     $memcache = MemCache.new(config)
     $memcache.servers = config['servers']
     $lock = Cash::Lock.new($memcache)
