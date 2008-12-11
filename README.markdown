@@ -1,7 +1,13 @@
-== Howto ==
-=== What kinds of queries are supported? ===
+## What is Cache Money ##
 
-In general, any query involving equality (=) and conjunction (AND) is supported by `Cache Money`. Disjunction (OR) and inequality (!=, <=, etc.) are not typically materialized in a hash table style index and are unsupported at this time.
+Cache Money is a write-through and read-through caching library for ActiveRecord.
+
+Read-Through: Queries like `User.find(:all, :conditions => ...)` will first look in Memcached and then look in the database for the results of that query. If there is a cache miss, it will populate the cache.
+
+Write-Through: As objects are created, updated, and deleted, all of the caches are *automatically* kept up-to-date and coherent.
+
+## Howto ##
+### What kinds of queries are supported? ###
 
 Many styles of ActiveRecord usage are supported:
 
@@ -15,7 +21,7 @@ Many styles of ActiveRecord usage are supported:
 
 As you can see, the `find_by_`, `find_all_by`, hash, array, and string forms are all supported.
 
-Queries with joins/includes are unsupported at this time.
+Queries with joins/includes are unsupported at this time. In general, any query involving just equality (=) and conjunction (AND) is supported by `Cache Money`. Disjunction (OR) and inequality (!=, <=, etc.) are not typically materialized in a hash table style index and are unsupported at this time.
 
 Queries with limits and offsets are supported. In general, however, if you are running queries with limits and offsets you are dealing with large datasets. It's more performant to place a limit on the size of the `Cache Money` index like so:
 
@@ -23,7 +29,7 @@ Queries with limits and offsets are supported. In general, however, if you are r
     
 In this example, only queries whose limit and offset are less than 1000 will use the cache.
 
-=== Multiple indices are supported ===
+### Multiple indices are supported ###
 
     class User
       index :id
@@ -31,7 +37,7 @@ In this example, only queries whose limit and offset are less than 1000 will use
       index :email
     end
 
-==== with_scope support ====
+#### with_scope support ####
 
 `with_scope` and the like (`named_scope`, `has_many`, `belongs_to`, etc.) are fully supported. For example, `user.devices.find(1)` will first look in the cache if there is an index like this:
 
@@ -39,11 +45,11 @@ In this example, only queries whose limit and offset are less than 1000 will use
      index [:user_id, :id]
     end
 
-=== Ordered indices ===
+### Ordered indices ###
 
-   class Message
-     index :sender_id, :order => :desc
-   end
+    class Message
+      index :sender_id, :order => :desc
+    end
 
 The order declaration will ensure that the index is kept in the correctly sorted order. Only queries with order clauses compatible with the ordering in the index will use the cache:
 
@@ -62,19 +68,19 @@ will support queries like:
  
 Note that ascending order is implicit in index declarations (i.e., not specifying an order is the same as ascending). This is also true of queries (order is not nondeterministic as in MySQL).
 
-=== Window indices ===
+### Window indices ###
 
-   class Message
-     index :sender_id, :limit => 500, :buffer => 100
-   end
+    class Message
+      index :sender_id, :limit => 500, :buffer => 100
+    end
 
 With a limit attribute, indices will only store limit + buffer in the cache. As new objects are created the index will be truncated, and as objects are destroyed, the cache will be refreshed if it has fewer than the limit of items. The buffer is how many "extra" items to keep around in case of deletes.
 
-=== Calculations ===
+### Calculations ###
 
 `Message.count(:all, :conditions => {:sender_id => ...})` will use the cache rather than the database. This happens for "free" -- no additional declarations are necessary.
 
-=== Transactions ===
+### Transactions ###
 
 Because of the parallel requests writing to the same indices, race conditions are possible. We have created a pessimistic "transactional" memcache client to handle the locking issues.
 
@@ -89,7 +95,7 @@ The writes to the cache are buffered until the transaction is committed. Reads w
 
 Writes are not truly atomic as reads do not pay attention to locks. Therefore, it is possible to peak inside a partially committed transaction. This is a performance compromise, since acquiring a lock for a read was deemed too expensive. Again, the critical region is as small as possible, reducing the frequency of such "peeks".
 
-==== Rollbacks ====
+#### Rollbacks ####
 
     CACHE.transaction do
       CACHE.set(k, v)
@@ -100,29 +106,29 @@ Because transactions buffer writes, an exception in a transaction ensures that t
 
 Nested transactions are fully supported, with partial rollback and (apparent) partial commitment (this is simulated with nested buffers).
 
-=== Mocks ===
+### Mocks ###
 
 For your unit tests, it is faster to use a Memcached mock than the real deal. Just place this in your initializer for your test environment:
 
     $memcache = Cash::Mock.new
     
-=== Locks ===
+### Locks ###
 
-In most locks are unnecessary; the transactional memcache client will take care locks for you automatically and guarantees that no deadlocks can occur. But for very complex distributed transactions, shared locks are necessary.
+In most cases locks are unnecessary; the transactional Memcached client will take care locks for you automatically and guarantees that no deadlocks can occur. But for very complex distributed transactions, shared locks are necessary.
 
     $lock.synchronize('lock_name') do
       $memcache.set("key", "value")
     end
     
-=== Local Cache ===
+### Local Cache ###
 
 Sometimes your code will request the same cache key twice in one request. You can avoid a round trip to the Memcached server by using a local, per-request cache. Add this to your initializer:
 
   $local = Cash::Local.new($memcache)
   $cache = Cash::Transactional.new($local, $lock)
 
-== Installation ==
-==== Step 1: `config/initializers/cache_money.rb` ====
+## Installation ##
+#### Step 1: `config/initializers/cache_money.rb` ####
 
 Place this in `config/initializers/cache_money.rb`
 
@@ -136,7 +142,7 @@ Place this in `config/initializers/cache_money.rb`
       is_cached :repository => $cache
     end
 
-==== Step 2: Add indices to your ActiveRecord models ====
+#### Step 2: Add indices to your ActiveRecord models ####
 
 Queries like `User.find(1)` will use the cache automatically. For more complex queries you must add indices on the attributes that you will query on. For example, a query like `User.find(:all, :conditions => {:name => 'bob'})` will require an index like:
 
