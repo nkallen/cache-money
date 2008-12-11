@@ -155,7 +155,11 @@ For queries on multiple attributes, combination indexes are necessary. For examp
     class User
       index [:name, :age]
     end
-    
+
+## Version ##
+
+WARNING: This is currently a RELEASE CANDIDATE. A version of this code is in production use at Twitter but the extraction and refactoring process may have introduced bugs and/or performance problems. There are no known major defects at this point, but still.
+
 ## Acknowledgments ##
 
 Thanks to
