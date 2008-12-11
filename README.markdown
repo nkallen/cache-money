@@ -166,5 +166,5 @@ Thanks to
 
   * Twitter for commissioning the development of this library and supporting the effort to open-source it.
   * Sam Luckenbill for pairing with me on most of the hard stuff.
-  * Matthew and Chris for pairing a few days and offering useful feedback on the readability of the code.
-  * Evan Weaver for helping to reason-through software and testing strategies to deal with replication lag.
+  * Matthew and Chris for pairing a few days, offering useful feedback on the readability of the code, and the initial implementation of the Memcached mock.
+  * Evan Weaver for helping to reason-through software and testing strategies to deal with replication lag, and the initial implementation of the Memcached lock.
