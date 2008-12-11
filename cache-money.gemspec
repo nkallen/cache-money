@@ -28,7 +28,8 @@ Gem::Specification.new do |s|
     "lib/cash/transactional.rb",
     "lib/cash/util/array.rb",
     "lib/cash/write_through.rb",
-    "lib/cash.rb"
+    "lib/cache_money.rb",
+    "lib/cache-money.rb"
   ]
   s.test_files = [
     "config/environment.rb",
