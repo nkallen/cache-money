@@ -4,7 +4,7 @@ $LOAD_PATH.unshift "#{dir}/../lib"
 require 'rubygems'
 require 'spec'
 require 'pp'
-require 'cash'
+require 'cache_money'
 require 'memcache'
 require File.join(dir, '../config/environment')
 
