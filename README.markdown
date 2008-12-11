@@ -136,6 +136,7 @@ Sometimes your code will request the same cache key twice in one request. You ca
 #### Step 1: `config/initializers/cache_money.rb` ####
 
 Place this in `config/initializers/cache_money.rb`
+
     require 'cache_money'
     
     config = YAML.load(IO.read(File.join(RAILS_ROOT, "config", "memcache.yml")))[RAILS_ENV]
