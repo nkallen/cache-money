@@ -11,6 +11,8 @@ require File.join(dir, '../config/environment')
 Spec::Runner.configure do |config|
   config.mock_with :rr
   config.before :suite do
+    load File.join(dir, "../db/schema.rb")
+
     config = YAML.load(IO.read((File.expand_path(File.dirname(__FILE__) + "/../config/memcache.yml"))))['test']
     $memcache = MemCache.new(config)
     $memcache.servers = config['servers']

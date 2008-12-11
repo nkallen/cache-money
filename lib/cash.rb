@@ -13,6 +13,10 @@ require 'cash/index'
 require 'cash/config'
 require 'cash/accessor'
 
+require 'cash/request'
+require 'cash/mock'
+require 'cash/local'
+
 require 'cash/query/abstract'
 require 'cash/query/select'
 require 'cash/query/primary_key'
@@ -41,7 +45,7 @@ module Cash
         alias_method_chain :transaction, :cache_transaction
       end
     end
-    
+
     def transaction_with_cache_transaction(&block)
       repository.transaction { transaction_without_cache_transaction(&block) }
     end

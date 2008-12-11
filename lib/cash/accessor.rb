@@ -3,6 +3,7 @@ module Cash
     def self.included(a_module)
       a_module.module_eval do
         extend ClassMethods
+        include InstanceMethods
       end
     end
 
@@ -14,7 +15,7 @@ module Cash
           hits = repository.get_multi(keys)
           if (missed_keys = keys - hits.keys).any?
             missed_values = block.call(missed_keys)
-            hits.merge!(Hash[*missed_keys.zip(Array(missed_values)).flatten])
+            hits.merge!(missed_keys.zip(Array(missed_values)).to_hash)
           end
           hits
         else
@@ -29,7 +30,7 @@ module Cash
         else
           fetch(keys, options) do
             if block_given?
-              add(keys, result = yield(keys))
+              add(keys, result = yield(keys), options)
               result
             end
           end
@@ -46,14 +47,14 @@ module Cash
 
       def incr(key, delta = 1, ttl = 0)
         repository.incr(cache_key(key), delta) || begin
-          repository.set(cache_key(key), (result = yield).to_s, ttl, true)
+          repository.add(cache_key(key), (result = yield).to_s, ttl, true)
           result
         end
       end
 
       def decr(key, delta = 1, ttl = 0)
         repository.decr(cache_key(key), delta) || begin
-          repository.set(cache_key(key), (result = yield).to_s, ttl, true)
+          repository.add(cache_key(key), (result = yield).to_s, ttl, true)
           result
         end
       end
@@ -63,8 +64,15 @@ module Cash
       end
 
       def cache_key(key)
-        "#{name}/#{key.gsub(' ', '+')}"
+        "#{name}/#{key.to_s.gsub(' ', '+')}"
       end
+    end
+
+    module InstanceMethods
+      def expire
+        self.class.expire(id)
+      end
+      alias_method :expire_cache, :expire
     end
   end
 end

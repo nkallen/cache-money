@@ -15,8 +15,11 @@ module Cash
       exception_was_raised = true
       raise
     ensure
-      @cache.flush unless exception_was_raised
-      end_transaction
+      begin
+        @cache.flush unless exception_was_raised
+      ensure
+        end_transaction
+      end
     end
 
     def method_missing(method, *args, &block)

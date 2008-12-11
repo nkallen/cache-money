@@ -50,7 +50,7 @@ module Cash
         $memcache.add(@key, @value)
         $memcache.get(@key).should == @value
 
-        @cache.delete(@key, options)
+        @cache.delete(@key)
         $memcache.get(@key).should be_nil
       end
 
@@ -95,7 +95,7 @@ module Cash
         $memcache.get(@key).should == @value
       end
 
-      describe 'when there is a return in the transaction' do
+      describe 'when there is a return/next/break in the transaction' do
         it 'commits to the real cache' do
           $memcache.get(@key).should == nil
           @cache.transaction do
@@ -380,19 +380,20 @@ module Cash
         @cache.get(@key).should == @value
       end
 
-      it "reading from the memcache does NOT show uncommitted writes" do
-        @cache.transaction do
-          $memcache.get(@key).should == nil
-          @cache.set(@key, @value)
-          $memcache.get(@key).should == nil
+      describe 'when reading from the memcache' do
+        it "does NOT show uncommitted writes" do
+          @cache.transaction do
+            $memcache.get(@key).should == nil
+            @cache.set(@key, @value)
+            $memcache.get(@key).should == nil
+          end
         end
       end
-
     end
 
     describe 'Exception Handling' do
 
-      it "re-raise exceptions thrown by memcache" do
+      it "re-raises exceptions thrown by memcache" do
         stub($memcache).set(anything, anything) { raise }
         lambda do
           @cache.transaction do
@@ -401,7 +402,7 @@ module Cash
         end.should raise_error
       end
 
-      it "rollback transaction cleanly if an exception is raised" do
+      it "rolls back transaction cleanly if an exception is raised" do
         $memcache.get(@key).should == nil
         @cache.get(@key).should == nil
         @cache.transaction do
@@ -412,7 +413,7 @@ module Cash
         $memcache.get(@key).should == nil
       end
 
-      it "not acquire locks if transaction is rolled back" do
+      it "does not acquire locks if transaction is rolled back" do
         mock($lock).acquire_lock.never
         mock($lock).release_lock.never
 

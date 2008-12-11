@@ -1,7 +1,7 @@
 module Cash
   module Query
     class Calculation < Abstract
-      delegate :calculate_without_cache, :to => :@active_record
+      delegate :calculate_without_cache, :incr, :to => :@active_record
 
       def initialize(active_record, operation, column, options1, options2)
         super(active_record, options1, options2)

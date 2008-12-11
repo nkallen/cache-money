@@ -1,0 +1,3 @@
+module Cash
+  Request = {}
+end

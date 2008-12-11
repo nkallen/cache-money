@@ -330,6 +330,13 @@ module Cash
           end
         end
 
+        describe 'when there is a with_scope' do
+          it "uses the database, not the cache" do
+            Story.send :with_scope, :find => { :conditions => { :title => @story.title }} do
+              Story.find(:first, :conditions => { :id => @story.id }).should == @story
+            end
+          end
+        end
       end
     end
   end

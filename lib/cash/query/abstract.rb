@@ -1,7 +1,7 @@
 module Cash
   module Query
     class Abstract
-      delegate :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :to => :@active_record
+      delegate :with_exclusive_scope, :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :to => :@active_record
 
       def self.perform(*args)
         new(*args).perform
@@ -13,13 +13,9 @@ module Cash
 
       def perform(find_options = {}, get_options = {})
         if cache_config = cacheable?(@options1, @options2, find_options)
-          attribute_value_pairs, index = cache_config
-          cache_keys = cache_keys(attribute_value_pairs)
-          misses, missed_keys = nil, nil
-          objects = get(cache_keys, get_options.merge(:ttl => index.ttl)) do |missed_keys|
-            misses = miss(missed_keys, @options1.merge(:limit => index.window))
-            serialize_objects(index, misses)
-          end
+          cache_keys, index = cache_keys(cache_config[0]), cache_config[1]
+
+          misses, missed_keys, objects = hit_or_miss(cache_keys, index, get_options)
           format_results(cache_keys, choose_deserialized_objects_if_possible(missed_keys, cache_keys, misses, objects))
         else
           uncacheable
@@ -64,6 +60,15 @@ module Cash
         end
       end
 
+      def hit_or_miss(cache_keys, index, options)
+        misses, missed_keys = nil, nil
+        objects = @active_record.get(cache_keys, options.merge(:ttl => index.ttl)) do |missed_keys|
+          misses = miss(missed_keys, @options1.merge(:limit => index.window))
+          serialize_objects(index, misses)
+        end
+        [misses, missed_keys, objects]
+      end
+
       def cache_keys(attribute_value_pairs)
         attribute_value_pairs.flatten.join('/')
       end
@@ -87,10 +92,10 @@ module Cash
       end
 
       AND = /\s+AND\s+/i
-      TABLE_AND_COLUMN = /(?:`?(\w+)`?\.)?`?(\w+)`?/ # Matches: `users`.id, `users`.`id`, users.id, id
-      VALUE = /'?(\d+|\?|(?:(?:[^']|'')*))'?/ # Matches: 123, ?, '123', '12''3'
+      TABLE_AND_COLUMN = /(?:(?:`|")?(\w+)(?:`|")?\.)?(?:`|")?(\w+)(?:`|")?/              # Matches: `users`.id, `users`.`id`, users.id, id
+      VALUE = /'?(\d+|\?|(?:(?:[^']|'')*))'?/                     # Matches: 123, ?, '123', '12''3'
       KEY_EQ_VALUE = /^\(?#{TABLE_AND_COLUMN}\s+=\s+#{VALUE}\)?$/ # Matches: KEY = VALUE, (KEY = VALUE)
-      ORDER = /^#{TABLE_AND_COLUMN}\s*(ASC|DESC)?$/i # Matches: COLUMN ASC, COLUMN DESC, COLUMN
+      ORDER = /^#{TABLE_AND_COLUMN}\s*(ASC|DESC)?$/i              # Matches: COLUMN ASC, COLUMN DESC, COLUMN
 
       def parse_indices_from_condition(conditions = '', *values)
         values = values.dup

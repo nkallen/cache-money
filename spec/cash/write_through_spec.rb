@@ -155,6 +155,17 @@ module Cash
           end
         end
       end
+
+      describe 'InstanceMethods' do
+        describe '#expire_caches' do
+          it 'deletes the index' do
+            story = Story.create!(:title => "I am delicious")
+            Story.get(cache_key = "id/#{story.id}").should == [story]
+            story.expire_caches
+            Story.get(cache_key).should be_nil
+          end
+        end
+      end
     end
 
     describe "Locking" do

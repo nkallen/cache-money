@@ -2,51 +2,51 @@ module Cash
   class Mock < HashWithIndifferentAccess
     attr_accessor :servers
 
-    def get_multi(*values)
-      reject { |k,v| !values.include? k }
+    def get_multi(keys)
+      slice(*keys).collect { |k,v| [k, Marshal.load(v)] }.to_hash
     end
 
-    def []=(key, value)
-      super(key, deep_clone(value))
+    def set(key, value, ttl = 0, raw = false)
+      self[key] = marshal(value, raw)
     end
 
-    def [](key)
-      deep_clone(super(key))
-    end
-
-    def set(key, value, *options)
-      self[key] = value
-    end
-
-    def get(key, *args)
-      self[key]
+    def get(key, raw = false)
+      if raw
+        self[key]
+      else
+        if self.has_key?(key)
+          Marshal.load(self[key])
+        else
+          nil
+        end
+      end
     end
 
     def incr(key, amount = 1)
-      self[key] ||= 0
-      self[key] += amount
+      if self.has_key?(key)
+        self[key] = (self[key].to_i + amount).to_s
+        self[key].to_i
+      end
     end
 
     def decr(key, amount = 1)
-      self[key] ||= 0
-      self[key] -= amount
+      if self.has_key?(key)
+        self[key] = (self[key].to_i - amount).to_s
+        self[key].to_i
+      end
     end
 
-    def add(key, value, *options)
-      if self[key]
+    def add(key, value, ttl = 0, raw = false)
+      if self.has_key?(key)
         "NOT_STORED\r\n"
       else
-        self[key] = value
+        self[key] = marshal(value, raw)
         "STORED\r\n"
       end
     end
 
-    def delete(key, *options)
-      self[key] = nil
-    end
-
     def append(key, value)
-      set(key, get(key).to_s + value.to_s)
+      set(key, get(key, true).to_s + value.to_s, nil, true)
     end
 
     def namespace
@@ -67,8 +67,12 @@ module Cash
 
     private
 
-    def marshal(obj)
-      Marshal.dump(obj)
+    def marshal(value, raw)
+      if raw
+        value.to_s
+      else
+        Marshal.dump(value)
+      end
     end
 
     def unmarshal(marshaled_obj)
