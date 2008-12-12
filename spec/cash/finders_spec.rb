@@ -12,7 +12,7 @@ module Cash
               Story.find(story.id).should == story
             end
           end
-
+          
           describe '#find(object)' do
             it 'uses the objects quoted id' do
               story = Story.create!
@@ -290,6 +290,18 @@ module Cash
                 Story.find(:all, :conditions => { :title => title }).should == [story, epic, oral]
                 Epic.find(:all, :conditions => { :title => title }).should == [epic, oral]
                 Oral.find(:all, :conditions => { :title => title }).should == [oral]
+              end
+            end
+          end
+        end
+
+        describe '#without_cache' do
+          describe 'when finders are called within the provided block' do
+            it 'uses the database not the cache' do
+              story = Story.create!
+              mock(Story).get.never
+              Story.without_cache do
+                Story.find(story.id).should == story
               end
             end
           end
