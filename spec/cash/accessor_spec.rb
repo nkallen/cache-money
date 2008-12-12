@@ -22,8 +22,8 @@ module Cash
         describe 'when there is a total cache miss' do
           it 'yields the keys to the block' do
             Story.fetch(["yabba", "dabba"]) { |*missing_ids| ["doo", "doo"] }.should == {
-              "Story/yabba" => "doo",
-              "Story/dabba" => "doo"
+              "Story:1/yabba" => "doo",
+              "Story:1/dabba" => "doo"
             }
           end
         end
@@ -32,8 +32,8 @@ module Cash
           it 'yields just the missing ids to the block' do
             Story.set("yabba", "dabba")
             Story.fetch(["yabba", "dabba"]) { |*missing_ids| "doo" }.should == {
-              "Story/yabba" => "dabba",
-              "Story/dabba" => "doo"
+              "Story:1/yabba" => "dabba",
+              "Story:1/dabba" => "doo"
             }
           end
         end
@@ -143,6 +143,16 @@ module Cash
         it 'returns the new cache value' do
           Story.decr("count", 1) { 2 }.should == 2
         end
+      end
+    end
+
+    describe '#cache_key' do
+      it 'uses the version number' do
+        Story.version 1
+        Story.cache_key("foo").should == "Story:1/foo"
+
+        Story.version 2
+        Story.cache_key("foo").should == "Story:2/foo"
       end
     end
   end

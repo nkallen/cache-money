@@ -66,7 +66,7 @@ module Cash
       end
 
       def cache_key(key)
-        "#{name}/#{key.to_s.gsub(' ', '+')}"
+        "#{name}:#{cache_config.version}/#{key.to_s.gsub(' ', '+')}"
       end
     end
 

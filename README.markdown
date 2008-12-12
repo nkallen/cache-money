@@ -79,6 +79,15 @@ With a limit attribute, indices will only store limit + buffer in the cache. As 
 
 `Message.count(:all, :conditions => {:sender_id => ...})` will use the cache rather than the database. This happens for "free" -- no additional declarations are necessary.
 
+### Version Numbers ###
+
+    class User
+      version 7
+      index ...
+    end
+    
+You can increment the version number as you migrate your schema.
+
 ### Transactions ###
 
 Because of the parallel requests writing to the same indices, race conditions are possible. We have created a pessimistic "transactional" memcache client to handle the locking issues.
@@ -136,7 +145,6 @@ Sometimes your code will request the same cache key twice in one request. You ca
 #### Step 1: `config/initializers/cache_money.rb` ####
 
 Place this in `config/initializers/cache_money.rb`
-
     require 'cache_money'
     
     config = YAML.load(IO.read(File.join(RAILS_ROOT, "config", "memcache.yml")))[RAILS_ENV]
