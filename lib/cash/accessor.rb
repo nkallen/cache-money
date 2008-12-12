@@ -74,7 +74,6 @@ module Cash
       def expire
         self.class.expire(id)
       end
-      alias_method :expire_cache, :expire
     end
   end
 end
