@@ -64,7 +64,7 @@ module Cash
       end
 
       def window
-        options[:limit] && options[:limit] + options[:buffer]
+        limit && limit + buffer
       end
     end
     include Attributes
