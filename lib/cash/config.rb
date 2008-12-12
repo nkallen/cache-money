@@ -9,11 +9,9 @@ module Cash
 
     module ClassMethods
       def self.extended(a_class)
-        a_class.class_eval do
-          class << self
-            delegate :repository, :indices, :to => :@cache_config
-            alias_method_chain :inherited, :cache_config
-          end
+        class << a_class
+          delegate :repository, :indices, :to => :@cache_config
+          alias_method_chain :inherited, :cache_config
         end
       end
 

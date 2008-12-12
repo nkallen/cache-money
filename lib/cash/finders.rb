@@ -8,12 +8,10 @@ module Cash
 
     module ClassMethods
       def self.extended(active_record_class)
-        active_record_class.class_eval do
-          class << self
-            alias_method_chain :find_every, :cache
-            alias_method_chain :find_from_ids, :cache
-            alias_method_chain :calculate, :cache
-          end
+        class << active_record_class
+          alias_method_chain :find_every, :cache
+          alias_method_chain :find_from_ids, :cache
+          alias_method_chain :calculate, :cache
         end
       end
 
