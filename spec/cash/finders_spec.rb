@@ -12,7 +12,7 @@ module Cash
               Story.find(story.id).should == story
             end
           end
-          
+
           describe '#find(object)' do
             it 'uses the objects quoted id' do
               story = Story.create!
