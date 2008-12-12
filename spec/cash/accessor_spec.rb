@@ -101,6 +101,22 @@ module Cash
         end
       end
     end
+    
+    describe '#add' do
+      describe 'when the value already exists' do
+        it 'yields to the block' do
+          Story.set("count", 1)
+          Story.add("count", 1) { "yield me" }.should == "yield me"
+        end
+      end
+      
+      describe 'when the value does not already exist' do
+        it 'adds the key to the cache' do
+          Story.add("count", 1)
+          Story.get("count").should == 1
+        end
+      end
+    end
 
     describe '#decr' do
       describe 'when there is a cache hit' do
