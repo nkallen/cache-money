@@ -45,6 +45,7 @@ Gem::Specification.new do |s|
     "spec/cash/write_through_spec.rb",
     "spec/spec_helper.rb"
   ]
-  s.add_dependency("activerecord", ["> 2.2.0"])
-  s.add_dependency("activesupport", ["> 2.2.0"])
+  s.add_dependency("activerecord", [">= 2.2.0"])
+  s.add_dependency("activesupport", [">= 2.2.0"])
+  s.add_dependency("memcache-client", [">= 1.5.0 "])
 end
