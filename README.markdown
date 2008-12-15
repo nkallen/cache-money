@@ -17,7 +17,6 @@ Many styles of ActiveRecord usage are supported:
  * `User.find(:conditions => ['id = ?', ...])`
  * `User.find(:conditions => 'id = ...')`
  * `User.find(:conditions => 'users.id = ...')`
- * `User.find(:conditions => '`users`.id = ...')`.
 
 As you can see, the `find_by_`, `find_all_by`, hash, array, and string forms are all supported.
 
@@ -31,22 +30,22 @@ In this example, only queries whose limit and offset are less than 1000 will use
 
 ### Multiple indices are supported ###
 
-    class User
+    class User < ActiveRecord::Base
       index :screen_name
       index :email
     end
 
-#### with_scope support ####
+#### `with_scope` support ####
 
 `with_scope` and the like (`named_scope`, `has_many`, `belongs_to`, etc.) are fully supported. For example, `user.devices.find(1)` will first look in the cache if there is an index like this:
 
-    class Device
+    class Device < ActiveRecord::Base
      index [:user_id, :id]
     end
 
 ### Ordered indices ###
 
-    class Message
+    class Message < ActiveRecord::Base
       index :sender_id, :order => :desc
     end
 
@@ -54,9 +53,9 @@ The order declaration will ensure that the index is kept in the correctly sorted
 
  * `Message.find(:all, :conditions => {:sender_id => ...}, :order => 'id DESC')`.
 
-Order clauses can be specified in many formats ("`messages`.id DESC", "`messages`.`id` DESC", and so forth), but ordering MUST be on the primary key column. Note that, in this example, `Message.find(:all, :conditions => {:sender_id => ...}, :order => 'id ASC')` will NOT use the cache because the order in the query does not match the index. An index like:
+Order clauses can be specified in many formats ("`messages`.id DESC", "`messages`.`id` DESC", and so forth), but ordering MUST be on the primary key column. 
 
-    class Message
+    class Message < ActiveRecord::Base
       index :sender_id, :order => :asc
     end
     
@@ -69,11 +68,13 @@ Note that ascending order is implicit in index declarations (i.e., not specifyin
 
 ### Window indices ###
 
-    class Message
+    class Message < ActiveRecord::Base
       index :sender_id, :limit => 500, :buffer => 100
     end
 
 With a limit attribute, indices will only store limit + buffer in the cache. As new objects are created the index will be truncated, and as objects are destroyed, the cache will be refreshed if it has fewer than the limit of items. The buffer is how many "extra" items to keep around in case of deletes.
+
+It is particularly in conjunction with window indices that the `:order` attribute is useful.
 
 ### Calculations ###
 
@@ -81,12 +82,12 @@ With a limit attribute, indices will only store limit + buffer in the cache. As 
 
 ### Version Numbers ###
 
-    class User
+    class User < ActiveRecord::Base
       version 7
       index ...
     end
     
-You can increment the version number as you migrate your schema.
+You can increment the version number as you migrate your schema. Be careful how you deploy changes like this as during deployment independent mongrels may be using different versions of your code. Indices can be corrupted if you do not plan accordingly.
 
 ### Transactions ###
 
@@ -94,9 +95,9 @@ Because of the parallel requests writing to the same indices, race conditions ar
 
 The memcache client library has been enhanced to simulate transactions.
 
-    CACHE.transaction do
-      CACHE.set(key1, value1)
-      CACHE.set(key2, value2)
+    $cache.transaction do
+      $cache.set(key1, value1)
+      $cache.set(key2, value2)
     end
 
 The writes to the cache are buffered until the transaction is committed. Reads within the transaction read from the buffer. The writes are performed as if atomically, by acquiring locks, performing writes, and finally releasing locks. Special attention has been paid to ensure that deadlocks cannot occur and that the critical region (the duration of lock ownership) is as small as possible.
@@ -105,8 +106,8 @@ Writes are not truly atomic as reads do not pay attention to locks. Therefore, i
 
 #### Rollbacks ####
 
-    CACHE.transaction do
-      CACHE.set(k, v)
+    $cache.transaction do
+      $cache.set(k, v)
       raise
     end
 
@@ -137,21 +138,40 @@ Sometimes your code will request the same cache key twice in one request. You ca
 
 ## Installation ##
 
-#### Step 0: Get the GEM ####
+#### Step 0: Install MemCached
+
+#### Step 1: Get the GEM ####
 
     % gem sources -a http://gems.github.com
     % sudo gem install nkallen-cache-money
+    
+#### Step 2: Configure MemCached.
 
-#### Step 1: `config/initializers/cache_money.rb` ####
+Place a YAML file in `config/memcached.yml` with contents like:
+
+    test:
+      ttl: 604800
+      namespace: ...
+      sessions: false
+      debug: false
+      servers: localhost:11211
+
+    development: 
+       ....
+       
+#### Step 3: `config/initializers/cache_money.rb` ####
 
 Place this in `config/initializers/cache_money.rb`
+
     require 'cache_money'
     
     config = YAML.load(IO.read(File.join(RAILS_ROOT, "config", "memcache.yml")))[RAILS_ENV]
     $memcache = MemCache.new(config)
     $memcache.servers = config['servers']
+
+    $local = Cash::Local.new($memcache)
     $lock = Cash::Lock.new($memcache)
-    $cache = Cash::Transactional.new($memcache, $lock)
+    $cache = Cash::Transactional.new($local, $lock)
 
     class ActiveRecord::Base
       is_cached :repository => $cache
@@ -161,13 +181,13 @@ Place this in `config/initializers/cache_money.rb`
 
 Queries like `User.find(1)` will use the cache automatically. For more complex queries you must add indices on the attributes that you will query on. For example, a query like `User.find(:all, :conditions => {:name => 'bob'})` will require an index like:
 
-    class User
+    class User < ActiveRecord::Base
       index :name
     end
     
 For queries on multiple attributes, combination indexes are necessary. For example, `User.find(:all, :conditions => {:name => 'bob', :age => 26})`
 
-    class User
+    class User < ActiveRecord::Base
       index [:name, :age]
     end
 
@@ -179,7 +199,7 @@ WARNING: This is currently a RELEASE CANDIDATE. A version of this code is in pro
 
 Thanks to
 
-  * Twitter for commissioning the development of this library and supporting the effort to open-source it.
-  * Sam Luckenbill for pairing with me on most of the hard stuff.
-  * Matthew and Chris for pairing a few days, offering useful feedback on the readability of the code, and the initial implementation of the Memcached mock.
-  * Evan Weaver for helping to reason-through software and testing strategies to deal with replication lag, and the initial implementation of the Memcached lock.
+ * Twitter for commissioning the development of this library and supporting the effort to open-source it.
+ * Sam Luckenbill for pairing with me on most of the hard stuff.
+ * Matthew and Chris for pairing a few days, offering useful feedback on the readability of the code, and the initial implementation of the Memcached mock.
+ * Evan Weaver for helping to reason-through software and testing strategies to deal with replication lag, and the initial implementation of the Memcached lock.
