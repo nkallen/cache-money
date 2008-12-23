@@ -1,7 +1,7 @@
 module Cash
   module Query
     class Abstract
-      delegate :with_exclusive_scope, :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :to => :@active_record
+      delegate :with_exclusive_scope, :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :columns_hash, :to => :@active_record
 
       def self.perform(*args)
         new(*args).perform
@@ -102,7 +102,7 @@ module Cash
         conditions.split(AND).inject([]) do |indices, condition|
           matched, table_name, column_name, sql_value = *(KEY_EQ_VALUE.match(condition))
           if matched
-            value = sql_value == '?' ? values.shift : sql_value
+            value = sql_value == '?' ? values.shift : columns_hash[column_name].type_cast(sql_value)
             indices << [column_name, value]
           else
             return nil

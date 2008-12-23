@@ -37,6 +37,7 @@ Spec::Runner.configure do |config|
     Story.class_eval do
       index :title
       index [:id, :title]
+      index :published
     end
 
     Epic = Class.new(Story)

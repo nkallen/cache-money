@@ -123,6 +123,15 @@ module Cash
             Story.find(:first, :conditions => []).should == story
           end
         end
+        
+        describe "#find(:first, :conditions => '...')" do
+          it "uses the active record instance to typecast values extracted from the conditions" do
+            story1 = Story.create! :title => 'a story', :published => true
+            story2 = Story.create! :title => 'another story', :published => false
+            Story.get('published/false').should == [story2.id]
+            Story.find(:first, :conditions => 'published = 0').should == story2
+          end
+        end
       end
 
       describe '#find_by_attr' do
