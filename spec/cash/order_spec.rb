@@ -87,6 +87,12 @@ module Cash
               FairyTale.find(:all, :conditions => { :title => @title }, :order => '`stories`.id').should == @fairy_tales
               FairyTale.find(:all, :conditions => { :title => @title }, :order => '`stories`.`id`').should == @fairy_tales
             end
+
+            describe 'when the order is passed as a symbol' do
+              it 'works' do
+                FairyTale.find(:all, :conditions => { :title => @title }, :order => :id)
+              end
+            end
           end
 
           describe 'when the cache is not populated' do

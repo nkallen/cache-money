@@ -27,7 +27,7 @@ module Cash
       def order
         @order ||= begin
           if order_sql = @options1[:order] || @options2[:order]
-            matched, table_name, column_name, direction = *(ORDER.match(order_sql))
+            matched, table_name, column_name, direction = *(ORDER.match(order_sql.to_s))
             [column_name, direction =~ DESC ? :desc : :asc]
           else
             ['id', :asc]
