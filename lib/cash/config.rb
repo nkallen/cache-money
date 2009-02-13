@@ -1,5 +1,10 @@
 module Cash
   module Config
+    def self.create(active_record, options, indices = [])
+      active_record.cache_config = Config.new(active_record, options)
+      indices.each { |i| active_record.index i.attributes, i.options }
+    end
+
     def self.included(a_module)
       a_module.module_eval do
         extend ClassMethods
@@ -38,11 +43,6 @@ module Cash
     class Config
       attr_reader :active_record, :options
 
-      def self.create(active_record, options, indices = [])
-        active_record.cache_config = new(active_record, options)
-        indices.each { |i| active_record.index i.attributes, i.options }
-      end
-
       def initialize(active_record, options = {})
         @active_record, @options = active_record, options
       end
@@ -64,7 +64,7 @@ module Cash
       end
 
       def inherit(active_record)
-        self.class.create(active_record, @options, indices)
+        Cash::Config.create(active_record, @options, indices)
       end
     end
   end

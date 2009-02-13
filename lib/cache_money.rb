@@ -28,7 +28,7 @@ class ActiveRecord::Base
   def self.is_cached(options = {})
     options.assert_valid_keys(:ttl, :repository, :version)
     include Cash unless ancestors.include?(Cash)
-    Config.create(self, options)
+    Cash::Config.create(self, options)
   end
 end
 
