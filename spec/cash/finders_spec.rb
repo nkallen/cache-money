@@ -22,7 +22,7 @@ module Cash
           end
 
           describe '#find(:first, ...)' do
-            describe '#find(:first, :conditions => { :id => ?})' do
+            describe '#find(:first, :conditions => { :id => ? })' do
               it "does not use the database" do
                 story = Story.create!
                 mock(Story.connection).execute.never
@@ -97,6 +97,15 @@ module Cash
                     mock(Story.connection).execute.never
                     Story.find(:first, :conditions => "`stories`.title = '#{story.title }'") \
                       .should == story
+                  end
+                end
+                
+                describe 'when the attributes must be coerced to sql values' do
+                  it 'does not use the database' do
+                    story1 = Story.create!(:published => true)
+                    story2 = Story.create!(:published => false)
+                    mock(Story.connection).execute.never
+                    Story.find(:first, :conditions => 'published = 0').should == story2
                   end
                 end
               end

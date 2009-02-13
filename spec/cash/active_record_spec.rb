@@ -109,27 +109,28 @@ module Cash
           end
         end
 
-        describe '#find(:first, ..., :offset => ...)' do
-          it "#finds the object in the correct order" do
-            story1 = Story.create!(:title => 'title1')
-            story2 = Story.create!(:title => story1.title)
-            Story.find(:first, :conditions => { :title => story1.title }, :offset => 1).should == story2
+        describe '#find(:first, ...)' do
+          describe '#find(:first, ..., :offset => ...)' do
+            it "finds the object in the correct order" do
+              story1 = Story.create!(:title => 'title1')
+              story2 = Story.create!(:title => story1.title)
+              Story.find(:first, :conditions => { :title => story1.title }, :offset => 1).should == story2
+            end
           end
-        end
 
-        describe '#find(:first, :conditions => [])' do
-          it 'works' do
-            story = Story.create!
-            Story.find(:first, :conditions => []).should == story
+          describe '#find(:first, :conditions => [])' do
+            it 'finds the object in the correct order' do
+              story = Story.create!
+              Story.find(:first, :conditions => []).should == story
+            end
           end
-        end
         
-        describe "#find(:first, :conditions => '...')" do
-          it "uses the active record instance to typecast values extracted from the conditions" do
-            story1 = Story.create! :title => 'a story', :published => true
-            story2 = Story.create! :title => 'another story', :published => false
-            Story.get('published/false').should == [story2.id]
-            Story.find(:first, :conditions => 'published = 0').should == story2
+          describe "#find(:first, :conditions => '...')" do
+            it "coerces ruby values to the appropriate database values" do
+              story1 = Story.create!(:title => 'a story', :published => true)
+              story2 = Story.create!(:title => 'another story', :published => false)
+              Story.find(:first, :conditions => 'published = 0').should == story2
+            end
           end
         end
       end
