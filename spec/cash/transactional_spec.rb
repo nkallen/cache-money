@@ -73,14 +73,14 @@ module Cash
           it 'returns a hash' do
             @cache.set('key1', @value)
             @cache.set('key2', @value)
-            @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => @value }
+            @cache.get_multi('key1', 'key2').should == { 'key1' => @value, 'key2' => @value }
           end
         end
 
         describe 'when there are misses' do
           it 'only returns results for hits' do
             @cache.set('key1', @value)
-            @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value }
+            @cache.get_multi('key1', 'key2').should == { 'key1' => @value }
           end
         end
       end
@@ -203,7 +203,7 @@ module Cash
             @cache.transaction do
               @cache.set('key1', @value)
               @cache.set('key2', [])
-              @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => [] }
+              @cache.get_multi('key1', 'key2').should == { 'key1' => @value, 'key2' => [] }
             end
           end
         end
@@ -213,7 +213,7 @@ module Cash
             @cache.transaction do
               @cache.set('key1', @value)
               @cache.set('key2', @value)
-              @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => @value }
+              @cache.get_multi('key1', 'key2').should == { 'key1' => @value, 'key2' => @value }
             end
           end
         end
@@ -222,7 +222,7 @@ module Cash
           it 'only returns results for hits' do
             @cache.transaction do
               @cache.set('key1', @value)
-              @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value }
+              @cache.get_multi('key1', 'key2').should == { 'key1' => @value }
             end
           end
         end
@@ -286,8 +286,8 @@ module Cash
           @cache.transaction do
             @cache.set('key1', @value)
             @cache.set('key2', @value)
-            @cache.get_multi(['key1', 'key2']).should == { 'key1' => @value, 'key2' => @value }
-            $memcache.get_multi(['key1', 'key2']).should == {}
+            @cache.get_multi('key1', 'key2').should == { 'key1' => @value, 'key2' => @value }
+            $memcache.get_multi('key1', 'key2').should == {}
           end
         end
 

@@ -31,7 +31,7 @@ module Cash
         $memcache.get("lock/lock_key").should == nil
       end
 
-      specify "does not block on recursive lock acquisition" do
+      it "does not block on recursive lock acquisition" do
         $lock.synchronize('lock_key') do
           lambda { $lock.synchronize('lock_key') {} }.should_not raise_error
         end
@@ -39,43 +39,62 @@ module Cash
     end
 
     describe '#acquire_lock' do
-      specify "creates a lock at a given cache key" do
+      it "creates a lock at a given cache key" do
         $memcache.get("lock/lock_key").should == nil
         $lock.acquire_lock("lock_key")
         $memcache.get("lock/lock_key").should_not == nil
       end
 
-      specify "retries specified number of times" do
-        $lock.acquire_lock('lock_key')
-        as_another_process do
-          mock($memcache).add("lock/lock_key", Process.pid, timeout = 10) { "NOT_STORED\r\n" }.times(3)
-          stub($lock).exponential_sleep
-          lambda { $lock.acquire_lock('lock_key', timeout, 3) }.should raise_error
+      describe 'when given a timeout for the lock' do
+        it "correctly sets timeout on memcache entries" do
+          mock($memcache).add('lock/lock_key', Process.pid, timeout = 10) { true }
+          $lock.acquire_lock('lock_key', timeout)
         end
       end
 
-      specify "correctly sets timeout on memcache entries" do
-        mock($memcache).add('lock/lock_key', Process.pid, timeout = 10) { "STORED\r\n" }
-        $lock.acquire_lock('lock_key', timeout)
-      end
+      describe 'when to processes contend for a lock' do
+        it "prevents two processes from acquiring the same lock at the same time" do
+          $lock.acquire_lock('lock_key')
+          as_another_process do
+            stub($lock).exponential_sleep
+            lambda { $lock.acquire_lock('lock_key') }.should raise_error
+          end
+        end
+        
+        describe 'when given a number of times to retry' do
+          it "retries specified number of times" do
+            $lock.acquire_lock('lock_key')
+            as_another_process do
+              mock($memcache).add("lock/lock_key", Process.pid, timeout = 10) { false }.times(retries = 3)
+              stub($lock).exponential_sleep
+              lambda { $lock.acquire_lock('lock_key', timeout, retries) }.should raise_error
+            end
+          end
+        end
+        
+        describe 'when given an initial wait' do
+          it 'sleeps exponentially starting with the initial wait' do
+            mock($lock).sleep(initial_wait = 0.123)
+            mock($lock).sleep(2 * initial_wait)
+            mock($lock).sleep(4 * initial_wait)
+            mock($lock).sleep(8 * initial_wait)
+            $lock.acquire_lock('lock_key')
+            as_another_process do
+              lambda { $lock.acquire_lock('lock_key', Lock::DEFAULT_EXPIRY, Lock::DEFAULT_RETRY, initial_wait) }.should raise_error
+            end            
+          end
+        end
 
-      specify "prevents two processes from acquiring the same lock at the same time" do
-        $lock.acquire_lock('lock_key')
-        as_another_process do
-          lambda { $lock.acquire_lock('lock_key') }.should raise_error
+        def as_another_process
+          current_pid = Process.pid
+          stub(Process).pid { current_pid + 1 }
+          yield
         end
       end
-
-      def as_another_process
-        current_pid = Process.pid
-        stub(Process).pid { current_pid + 1 }
-        yield
-      end
-
     end
 
     describe '#release_lock' do
-      specify "deletes the lock for a given cache key" do
+      it "deletes the lock for a given cache key" do
         $memcache.get("lock/lock_key").should == nil
         $lock.acquire_lock("lock_key")
         $memcache.get("lock/lock_key").should_not == nil

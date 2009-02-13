@@ -11,8 +11,10 @@ module Cash
       def fetch(keys, options = {}, &block)
         case keys
         when Array
+          return {} if keys.empty?
+
           keys = keys.collect { |key| cache_key(key) }
-          hits = repository.get_multi(keys)
+          hits = repository.get_multi(*keys)
           if (missed_keys = keys - hits.keys).any?
             missed_values = block.call(missed_keys)
             hits.merge!(missed_keys.zip(Array(missed_values)).to_hash)
@@ -38,8 +40,8 @@ module Cash
       end
 
       def add(key, value, options = {})
-        if repository.add(cache_key(key), value, options[:ttl] || 0, options[:raw]) == "NOT_STORED\r\n"
-          yield
+        unless repository.add(cache_key(key), value, options[:ttl] || 0, options[:raw])
+          yield if block_given?
         end
       end
 

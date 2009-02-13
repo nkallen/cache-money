@@ -40,11 +40,26 @@ module Cash
     end
 
     def add(key, value, *options)
-      result = @remote_cache.add(key, value, *options)
-      if result == "STORED\r\n"
+      if result = @remote_cache.add(key, value, *options)
         @local_cache[key] = value
       end
       result
+    end
+
+    def incr(key, amount = 1)
+      @remote_cache.incr(key, amount)
+      if @local_cache[key]
+        @local_cache[key] = (@local_cache[key].to_i + amount).to_s
+        @local_cache[key].to_i
+      end
+    end
+
+    def decr(key, amount = 1)
+      @remote_cache.decr(key, amount)
+      if @local_cache[key]
+        @local_cache[key] = (@local_cache[key].to_i - amount).to_s
+        @local_cache[key].to_i
+      end
     end
 
     def delete(key, *options)

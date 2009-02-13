@@ -19,6 +19,12 @@ module Cash
       end
 
       describe '#fetch([...])', :shared => true do
+        describe '#fetch([])' do
+          it 'returns the empty hash' do
+            Story.fetch([]).should == {}
+          end
+        end
+
         describe 'when there is a total cache miss' do
           it 'yields the keys to the block' do
             Story.fetch(["yabba", "dabba"]) { |*missing_ids| ["doo", "doo"] }.should == {
@@ -104,9 +110,18 @@ module Cash
 
     describe '#add' do
       describe 'when the value already exists' do
-        it 'yields to the block' do
-          Story.set("count", 1)
-          Story.add("count", 1) { "yield me" }.should == "yield me"
+        describe 'when a block is given' do
+          it 'yields to the block' do
+            Story.set("count", 1)
+            Story.add("count", 1) { "yield me" }.should == "yield me"
+          end
+        end
+        
+        describe 'when no block is given' do
+          it 'does not error' do
+            Story.set("count", 1)
+            lambda { Story.add("count", 1) }.should_not raise_error
+          end
         end
       end
 

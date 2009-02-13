@@ -14,7 +14,7 @@ require 'cash/config'
 require 'cash/accessor'
 
 require 'cash/request'
-require 'cash/mock'
+require 'cash/fake'
 require 'cash/local'
 
 require 'cash/query/abstract'
@@ -27,7 +27,7 @@ require 'cash/util/array'
 class ActiveRecord::Base
   def self.is_cached(options = {})
     options.assert_valid_keys(:ttl, :repository, :version)
-    include Cash
+    include Cash unless ancestors.include?(Cash)
     Config.create(self, options)
   end
 end

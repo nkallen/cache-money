@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
     "lib/cash/index.rb",
     "lib/cash/local.rb",
     "lib/cash/lock.rb",
-    "lib/cash/mock.rb",
+    "lib/cash/fake.rb",
     "lib/cash/query/abstract.rb",
     "lib/cash/query/calculation.rb",
     "lib/cash/query/primary_key.rb",
@@ -32,7 +32,7 @@ Gem::Specification.new do |s|
   ]
   s.test_files = [
     "config/environment.rb",
-    "config/memcache.yml",
+    "config/memcached.yml",
     "db/schema.rb",
     "spec/cash/accessor_spec.rb",
     "spec/cash/active_record_spec.rb",
@@ -47,5 +47,5 @@ Gem::Specification.new do |s|
   ]
   s.add_dependency("activerecord", [">= 2.2.0"])
   s.add_dependency("activesupport", [">= 2.2.0"])
-  s.add_dependency("memcache-client", [">= 1.5.0 "])
+  s.add_dependency("memcached", [">= 0.13"])
 end

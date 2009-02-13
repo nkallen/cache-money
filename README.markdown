@@ -166,8 +166,7 @@ Place this in `config/initializers/cache_money.rb`
     require 'cache_money'
     
     config = YAML.load(IO.read(File.join(RAILS_ROOT, "config", "memcached.yml")))[RAILS_ENV]
-    $memcache = MemCache.new(config)
-    $memcache.servers = config['servers']
+    $memcache = Memcached::Rails.new(config['servers'], config)
 
     $local = Cash::Local.new($memcache)
     $lock = Cash::Lock.new($memcache)

@@ -1,7 +1,7 @@
 module Cash
   class Lock
     class Error < RuntimeError; end
-
+    INITIAL_WAIT = 1
     DEFAULT_RETRY = 5
     DEFAULT_EXPIRY = 30
 
@@ -9,11 +9,11 @@ module Cash
       @cache = cache
     end
 
-    def synchronize(key, lock_expiry = DEFAULT_EXPIRY, retries = DEFAULT_RETRY)
+    def synchronize(key, lock_expiry = DEFAULT_EXPIRY, retries = DEFAULT_RETRY, initial_wait = INITIAL_WAIT)
       if recursive_lock?(key)
         yield
       else
-        acquire_lock(key, lock_expiry, retries)
+        acquire_lock(key, lock_expiry, retries, initial_wait)
         begin
           yield
         ensure
@@ -22,14 +22,11 @@ module Cash
       end
     end
 
-    def acquire_lock(key, lock_expiry = DEFAULT_EXPIRY, retries = DEFAULT_RETRY)
+    def acquire_lock(key, lock_expiry = DEFAULT_EXPIRY, retries = DEFAULT_RETRY, initial_wait = INITIAL_WAIT)
       retries.times do |count|
-        begin
-          response = @cache.add("lock/#{key}", Process.pid, lock_expiry)
-          return if response == "STORED\r\n"
-          raise Error if count == retries - 1
-        end
-        exponential_sleep(count) unless count == retries - 1
+        return if @cache.add("lock/#{key}", Process.pid, lock_expiry)
+        raise Error if count == retries - 1
+        exponential_sleep(count, initial_wait) unless count == retries - 1
       end
       raise Error, "Couldn't acquire memcache lock for: #{key}"
     end
@@ -38,8 +35,8 @@ module Cash
       @cache.delete("lock/#{key}")
     end
 
-    def exponential_sleep(count)
-      @runtime += Benchmark::measure { sleep((2**count) / 2.0) }
+    def exponential_sleep(count, initial_wait)
+      sleep((2**count) * initial_wait)
     end
 
     private

@@ -62,7 +62,7 @@ module Cash
       buffer_command Command.new(:delete, key, *options)
     end
 
-    def get_multi(keys)
+    def get_multi(*keys)
       values = keys.collect { |key| get(key) }
       keys.zip(values).to_hash
     end

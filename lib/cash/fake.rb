@@ -1,8 +1,8 @@
 module Cash
-  class Mock < HashWithIndifferentAccess
+  class Fake < HashWithIndifferentAccess
     attr_accessor :servers
 
-    def get_multi(keys)
+    def get_multi(*keys)
       slice(*keys).collect { |k,v| [k, Marshal.load(v)] }.to_hash
     end
 
@@ -37,12 +37,10 @@ module Cash
     end
 
     def add(key, value, ttl = 0, raw = false)
-      if self.has_key?(key)
-        "NOT_STORED\r\n"
-      else
-        self[key] = marshal(value, raw)
-        "STORED\r\n"
-      end
+      return false if self.has_key?(key)
+
+      self[key] = marshal(value, raw)
+      true
     end
 
     def append(key, value)
@@ -66,7 +64,6 @@ module Cash
     end
 
     private
-
     def marshal(value, raw)
       if raw
         value.to_s

@@ -26,7 +26,6 @@ module Cash
         @ids.collect { |id| "id/#{id}" }
       end
 
-
       def miss(missing_keys, options)
         find_from_keys(*missing_keys)
       end

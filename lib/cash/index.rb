@@ -22,15 +22,13 @@ module Cash
 
     module Commands
       def add(object)
-        clone = object.shallow_clone
         _, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
-        add_to_index_with_minimal_network_operations(new_attribute_value_pairs, clone)
+        add_to_index_with_minimal_network_operations(new_attribute_value_pairs, object)
       end
 
       def update(object)
-        clone = object.shallow_clone
         old_attribute_value_pairs, new_attribute_value_pairs = old_and_new_attribute_value_pairs(object)
-        update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, clone)
+        update_index_with_minimal_network_operations(old_attribute_value_pairs, new_attribute_value_pairs, object)
       end
 
       def remove(object)
@@ -70,7 +68,7 @@ module Cash
     include Attributes
 
     def serialize_object(object)
-      primary_key? ? object : object.id
+      primary_key? ? object.shallow_clone : object.id
     end
 
     def matches?(query)
@@ -105,7 +103,7 @@ module Cash
     end
 
     def add_object_to_primary_key_cache(attribute_value_pairs, object)
-      set(cache_key(attribute_value_pairs), [object], :ttl => ttl)
+      set(cache_key(attribute_value_pairs), [serialize_object(object)], :ttl => ttl)
     end
 
     def cache_key(attribute_value_pairs)
