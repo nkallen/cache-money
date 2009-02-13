@@ -23,6 +23,7 @@ require 'cash/query/primary_key'
 require 'cash/query/calculation'
 
 require 'cash/util/array'
+require 'cash/util/marshal'
 
 class ActiveRecord::Base
   def self.is_cached(options = {})

@@ -99,7 +99,7 @@ module Cash
                       .should == story
                   end
                 end
-                
+
                 describe 'when the attributes must be coerced to sql values' do
                   it 'does not use the database' do
                     story1 = Story.create!(:published => true)

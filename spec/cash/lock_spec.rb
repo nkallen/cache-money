@@ -60,7 +60,7 @@ module Cash
             lambda { $lock.acquire_lock('lock_key') }.should raise_error
           end
         end
-        
+
         describe 'when given a number of times to retry' do
           it "retries specified number of times" do
             $lock.acquire_lock('lock_key')
@@ -71,7 +71,7 @@ module Cash
             end
           end
         end
-        
+
         describe 'when given an initial wait' do
           it 'sleeps exponentially starting with the initial wait' do
             mock($lock).sleep(initial_wait = 0.123)
@@ -81,7 +81,7 @@ module Cash
             $lock.acquire_lock('lock_key')
             as_another_process do
               lambda { $lock.acquire_lock('lock_key', Lock::DEFAULT_EXPIRY, Lock::DEFAULT_RETRY, initial_wait) }.should raise_error
-            end            
+            end
           end
         end
 

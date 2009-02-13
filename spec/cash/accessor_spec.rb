@@ -116,7 +116,7 @@ module Cash
             Story.add("count", 1) { "yield me" }.should == "yield me"
           end
         end
-        
+
         describe 'when no block is given' do
           it 'does not error' do
             Story.set("count", 1)

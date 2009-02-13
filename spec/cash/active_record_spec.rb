@@ -124,7 +124,7 @@ module Cash
               Story.find(:first, :conditions => []).should == story
             end
           end
-        
+
           describe "#find(:first, :conditions => '...')" do
             it "coerces ruby values to the appropriate database values" do
               story1 = Story.create!(:title => 'a story', :published => true)
