@@ -10,6 +10,10 @@ NEW FEATURES
 
 BUGS
 * Handle append strategy (using add rather than set?) to avoid race condition
+* with_scope { find(1) }
+* when hydrating a query (find_from_keys) we end up hitting the cache one more time (which is unneccessary)
+    - BUT, for a primary key, we want to populate the cache... 
+* is full result formatting necessary in PrimaryKey?
 
 MISSING TESTS:
 * missing tests for Klass.transaction do ... end

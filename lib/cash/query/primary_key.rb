@@ -18,14 +18,9 @@ module Cash
       end
 
       protected
-      def deserialize_objects(objects)
-        convert_to_active_record_collection(super(objects))
-      end
-
       def cache_keys(attribute_value_pairs)
         @ids.collect { |id| "id/#{id}" }
       end
-
 
       def miss(missing_keys, options)
         find_from_keys(*missing_keys)

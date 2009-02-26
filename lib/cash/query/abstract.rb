@@ -1,7 +1,7 @@
 module Cash
   module Query
     class Abstract
-      delegate :with_exclusive_scope, :get, :table_name, :indices, :find_from_ids_without_cache, :cache_key, :columns_hash, :to => :@active_record
+      delegate :with_exclusive_scope, :get, :table_name, :indices, :find_from_ids_without_cache, :find_every_without_cache, :cache_key, :columns_hash, :to => :@active_record
 
       def self.perform(*args)
         new(*args).perform
@@ -116,11 +116,12 @@ module Cash
       alias_method :index_for, :indexed_on?
 
       def format_results(cache_keys, objects)
-        return objects if objects.blank?
-
-        objects = convert_to_array(cache_keys, objects)
-        objects = apply_limits_and_offsets(objects, @options1)
-        deserialize_objects(objects)
+        unless objects.blank?
+          objects = convert_to_array(cache_keys, objects)
+          objects = apply_limits_and_offsets(objects, @options1)
+          objects = deserialize_objects(objects)
+        end
+        convert_to_active_record_collection(objects)
       end
 
       def choose_deserialized_objects_if_possible(missed_keys, cache_keys, misses, objects)
@@ -137,6 +138,10 @@ module Cash
         else
           Array(object)
         end
+      end
+      
+      def convert_to_active_record_collection(objects)
+        objects
       end
 
       def apply_limits_and_offsets(results, options)
@@ -155,7 +160,7 @@ module Cash
 
       def find_from_keys(*missing_keys)
         missing_ids = Array(missing_keys).flatten.collect { |key| key.split('/')[2].to_i }
-        find_from_ids_without_cache(missing_ids, {})
+        with_exclusive_scope { find_from_ids_without_cache(missing_ids, {}) }
       end
     end
   end
