@@ -45,8 +45,12 @@ module Cash
       private
       def self.unfold(klass, operation, object)
         while klass < ActiveRecord::Base && klass.ancestors.include?(WriteThrough)
-          klass.send(operation, object)
-          klass = klass.superclass
+          begin
+            klass.send(operation, object)
+            klass = klass.superclass
+          rescue Exception
+            klass = klass.superclass
+          end
         end
       end
     end

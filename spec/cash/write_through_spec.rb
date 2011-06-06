@@ -219,5 +219,35 @@ module Cash
         end
       end
     end
+
+    describe "when memcached is down" do
+      before do
+        @servers = $memcache.servers
+        $memcache.servers = 'localhost:22122'
+      end
+
+      it "create skips the cache" do
+        story = Story.create!(:title => 'My title')
+        Story.find(story.id).should == story
+      end
+
+      it "update skips the cache" do
+        story = Story.create!(:title => "I am delicious")
+        Story.find(story.id).title.should == "I am delicious"
+        story.update_attributes(:title => "I am fabulous")
+        Story.find(story.id).title.should == "I am fabulous"
+      end
+
+      it "delete skips the cache" do
+        story = Story.create!(:title => "I am delicious")
+        Story.find(story.id).should == story
+        story.destroy
+        Story.all.should == []
+      end
+
+      after do
+        $memcache.servers = @servers
+      end
+    end
   end
 end
