@@ -350,6 +350,17 @@ module Cash
           end
         end
       end
+
+      describe 'when memcached is down' do
+        before do
+          @story = Story.create!(:title => 'My title')
+          $memcache.servers = 'localhost:22122'
+        end
+
+        it 'should behave like when the query is uncacheable' do
+          Story.find(@story.id).should == @story
+        end
+      end
     end
   end
 end

@@ -12,12 +12,16 @@ module Cash
       end
 
       def perform(find_options = {}, get_options = {})
-        if cache_config = cacheable?(@options1, @options2, find_options)
-          cache_keys, index = cache_keys(cache_config[0]), cache_config[1]
+        begin
+          if cache_config = cacheable?(@options1, @options2, find_options)
+            cache_keys, index = cache_keys(cache_config[0]), cache_config[1]
 
-          misses, missed_keys, objects = hit_or_miss(cache_keys, index, get_options)
-          format_results(cache_keys, choose_deserialized_objects_if_possible(missed_keys, cache_keys, misses, objects))
-        else
+            misses, missed_keys, objects = hit_or_miss(cache_keys, index, get_options)
+            format_results(cache_keys, choose_deserialized_objects_if_possible(missed_keys, cache_keys, misses, objects))
+          else
+            uncacheable
+          end
+        rescue Exception
           uncacheable
         end
       end
