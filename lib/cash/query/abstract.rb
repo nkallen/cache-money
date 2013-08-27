@@ -62,8 +62,9 @@ module Cash
 
       def hit_or_miss(cache_keys, index, options)
         misses, missed_keys = nil, nil
-        objects = @active_record.get(cache_keys, options.merge(:ttl => index.ttl)) do |missed_keys|
-          misses = miss(missed_keys, @options1.merge(:limit => index.window))
+        objects = @active_record.get(cache_keys, options.merge(:ttl => index.ttl)) do |missed|
+          missed_keys = missed
+          misses = miss(missed, @options1.merge(:limit => index.window))
           serialize_objects(index, misses)
         end
         [misses, missed_keys, objects]
